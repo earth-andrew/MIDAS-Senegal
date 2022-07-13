@@ -1,8 +1,8 @@
-# MIDAS_Bangladesh
+# MIDAS_Senegal
 
-This is the complete application of MIDAS used to simulate internal migration in Bangladesh under expected flooding up to 2100 under RCP2.6, 4.5 and 8.5.
+This is a draft version of an application of MIDAS to mobility in Senegal.
 
-To run the application on your machine, copy the 'MIDAS Bangladesh Application' folder.  Files and subdirectories are as follows:
+To run the application on your machine, maintain folder structure on your machine.  Files and subdirectories are as follows:
 
 runMIDAS.m:  Runs one simulation of MIDAS Bangladesh
 
@@ -16,4 +16,4 @@ Application_Specific_MIDAS_Code: These scripts are typically modified or rewritt
 
 Override_Core_MIDAS_Code: Scripts in this directory will override versions with the same name stored in the Core_MIDAS_Code directory; this is set up to allow testing of alternative structures without committing them to core code
 
-This release also includes analysis scripts used in developing the calibration, parsing MIDAS outputs, and developing figures, included in the 'Data Analysis Scripts' directory
+
