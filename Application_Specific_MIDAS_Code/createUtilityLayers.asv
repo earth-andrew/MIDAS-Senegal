@@ -31,6 +31,15 @@ function [ utilityLayerFunctions, utilityHistory, utilityAccessCosts, utilityTim
 
 %all of these variables are generated here.
 
+load([modelParameters.utilityDataPath '/utility_base_layers.mat'])
+
+%other things to port in or define:
+noise = modelParameters.utility_noise;
+iReturn = modelParameters.utility_iReturn;
+iDiscount = modelParameters.utility_iDiscount;
+iYears = modelParameters.utility_iYears;
+utility_levels = 5;
+
 %%%%%%%%%%%%%%%%%%%%%%%
 %%utilityLayerFunctions
 %%%%%%%%%%%%%%%%%%%%%%%
@@ -42,10 +51,11 @@ function [ utilityLayerFunctions, utilityHistory, utilityAccessCosts, utilityTim
 %one must either export some of the calculation to an intermediate variable
 %that can be fed to a single-line version of the layer function OR revisit
 %this anonymous function structure.
-utilityLayerFunctions{1,1} = @(x, y, t, n, varargin) varargin{1};   %some income layer
-utilityLayerFunctions{2,1} = @(x, y, t, n, varargin) varargin{1};   %some income layer
-utilityLayerFunctions{3,1} = @(x, y, t, n, varargin) varargin{1};   %some income layer
 
+utilityLayerFunctions = [];
+for indexI = 1:(size(utility_layers,2))  %16 (or 13) different sources, with 4 levels
+    utilityLayerFunctions{indexI,1} = @(k,m,nExpected,n_actual, base) base * (m * nExpected) / (max(0, n_actual - m * nExpected) * k + m * nExpected);   %some income layer - base layer input times density-dependent extinction
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%
 %%utilityHistory
@@ -57,45 +67,116 @@ utilityHistory = zeros(length(locations),length(utilityLayerFunctions),timeSteps
 %%%%%%%%%%%%%%%%%%%%%%%
 %%utilityBaseLayers
 %%%%%%%%%%%%%%%%%%%%%%%
-utilityBaseLayers = -9999 * ones(length(locations),length(utilityLayerFunctions),timeSteps);
 
 %utilityBaseLayers has dimensions of (location, activity, time)
 
-%Below a silly example that makes layer 1 variable over time, 
-utilityBaseLayers(locations.AdminUnit1 == 2, 1,1:timeSteps/3) = 700000;
-utilityBaseLayers(locations.AdminUnit1 == 2, 1,timeSteps/3:end) = 0;
-utilityBaseLayers(locations.AdminUnit1  == 1, 1,1:timeSteps/3) = 0;
-utilityBaseLayers(locations.AdminUnit1 == 1, 1,timeSteps/3:end) = 700000;
 
-utilityBaseLayers(locations.AdminUnit1 == 2, 2,:) = 50000;
-utilityBaseLayers(locations.AdminUnit1 == 1, 2,:) = 200000;
+localOnly = [1; ... %blue collar
+    0; ... %white collar
+    0; ... %service
+    1; ... %ag-fish
+    1; ... %livestock
+    1; ... %small business
+];
 
-utilityBaseLayers(locations.AdminUnit1 == 2, 3,:) = 10000;
-utilityBaseLayers(locations.AdminUnit1 == 1, 3,:) = 10000;
+timeQs =[.5 .5 .5 .5; ... %blue collar
+    .5 .5 .5 .5; ... %white collar
+    .5 .5 .5 .5; ... %service
+    0 .5 .5 0; ... %ag-fish
+    .5 0 0 0; ... %livestock
+    .5 .5 .5 .5];  %small business
 
+incomeQs =[1 1 1 1; ... %blue collar
+    1 1 1 1; ... %white collar
+    1 1 1 1; ... %service
+    0 0 0 1; ... %ag-fish
+    0 0 1 0; ... %livestock
+    1 1 1 1];  %small business
+
+quarterShare = incomeQs ./ (sum(incomeQs,2));
+
+utilityBaseLayers = ones(length(locations),length(utilityLayerFunctions),timeSteps);
+for indexI = 1:modelParameters.cycleLength:size(utilityBaseLayers,3)
+    utilityBaseLayers(:,:,indexI) = utility_layers;
+end
+
+for indexI = 1:size(utilityBaseLayers,1)
+    for indexJ = 1:size(utilityBaseLayers,2)
+        temp_2 = zeros(size(utilityBaseLayers,3),1);
+        for indexM = 1:modelParameters.cycleLength:size(utilityBaseLayers,3)
+            temp_2(indexM:indexM + modelParameters.cycleLength - 1) = utilityBaseLayers(indexI,indexJ,indexM) * quarterShare(ceil(indexJ/utility_levels),:);
+        end
+        utilityBaseLayers(indexI,indexJ,:) = temp_2;
+    end
+end
+
+%now add some lead time for agents to learn before time actually starts
+%moving
+utilityBaseLayers(:,:,leadTime+1:leadTime+timeSteps) = utilityBaseLayers;
+for indexI = leadTime:-1:1
+   utilityBaseLayers(:,:,indexI) = utilityBaseLayers(:,:,indexI+modelParameters.cycleLength); 
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%
+%%utilityAccessCosts and utilityAccessCodesMat
+%%%%%%%%%%%%%%%%%%%%%%%
 %define the cost of access for utility layers ... payments may provide
 %access to different locations (i.e., a license within a state or country)
 %or to different layers (i.e., training and certification in related
 %fields, or capital investment in related tools, etc.)  
-utilityAccessCosts = zeros(length(utilityLayerFunctions),2);
 
-%placeholders as examples
+%utilityAccessCosts Dimensions: n x 2, where n is the number of different costs, and the 2
+%columns are for the ID and the value
 
-utilityAccessCosts = ...
-    [1 1223; %some fee identified with ID 1 is 1223
-    ]; 
+%utilityAccessCodesMat Dimensions: n x m x k, where n is the number of different costs, m is the
+%number of different utility layers, and k is the number of locations
 
-utilityAccessCodesMat = false(size(utilityAccessCosts,1),length(utilityLayerFunctions),length(locations));
+%estimate costs for access, such that the expected ROI is i +/- noise, given discount
+%rate j, assuming average value over time from incomeMean and estimating
+%marginal increase moving from one quartile to the next.  for assets, these
+%values are place-specific.  for qualifications, average the costs over the
+%appropriate domain
+accessCodeCount = 1;
+numCodes = sum(localOnly) * utility_levels * size(locations,1) + sum(~localOnly) * utility_levels;
+
+utilityAccessCodesMat = false(numCodes,length(utilityLayerFunctions),length(locations));
+utilityAccessCosts = [];
+for indexI = 1:length(localOnly)
+   if(localOnly(indexI))
+        meanValues = mean(utilityBaseLayers(:,(indexI-1)*utility_levels+1:indexI*utility_levels,:,:),3);
+        accessCost = meanValues / (1 + iReturn) * ((1+iDiscount)^iYears -1) / iDiscount / ((1 + iDiscount)^iYears);  %using CCRF to estimate access cost
+        for indexJ = 1:utility_levels
+           utilityAccessCosts = [utilityAccessCosts; [(accessCodeCount:accessCodeCount + length(locations)-1)' accessCost(:,indexJ)]];   
+           for indexK = 1:length(locations)
+               utilityAccessCodesMat(accessCodeCount, (indexI-1)*utility_levels+indexJ, indexK) = 1;
+               accessCodeCount = accessCodeCount + 1;
+           end
+        end       
+   else
+        meanValues = mean(mean(utilityBaseLayers(:,(indexI-1)*utility_levels+1:indexI*utility_levels,:,:),3),1);
+        accessCost = meanValues / (1 + iReturn) * ((1+iDiscount)^iYears -1) / iDiscount / ((1 + iDiscount)^iYears);
+        for indexJ = 1:utility_levels
+           utilityAccessCosts = [utilityAccessCosts; [(accessCodeCount+1) accessCost(indexJ)]];   
+           utilityAccessCodesMat(accessCodeCount,(indexI-1)*utility_levels+indexJ,:) = 1;
+           accessCodeCount = accessCodeCount + 1;
+        end
+   end
+end
+
 
 %in some way, estimate the number of agents you expect to be occupying a
 %particular slot, as well as whether there are a fixed number of slots
 %(i.e., jobs) or not (i.e., free entry to that layer).  By default these
 %are all set to 0
-nExpected = zeros(length(locations),length(utilityLayerFunctions));
-hardSlotCountYN = false(size(nExpected));
+%estimate expected number of agents for each layer, for use in the utility
+%layer function input
+locationProb = demographicVariables.locationLikelihood;
+locationProb(2:end) = locationProb(2:end) - locationProb(1:end-1);
+numAgentsModel = locationProb * modelParameters.numAgents;
 
-%nExpected(isnan(nExpected)) = 0;
-%nExpected(isinf(nExpected)) = 0;
+nExpected =  (numAgentsModel*ones(1,size(utility_layers_prop,2))).*utility_layers_prop;
+hardSlotCountYN = false(size(nExpected));
+hardSlotCountYN(:,1:15) = true;
 
 %utility layers may be income, use value, etc.  identify what form of
 %utility it is, so that they get added and weighted appropriately in
@@ -111,14 +192,20 @@ utilityForms(1:length(utilityLayerFunctions)) = 1;
 %Income form is either 0 or 1 (with 1 meaning income)
 incomeForms = utilityForms == 1;
 
-%specify the fraction of time for each period in a cycle that a layer
+
+%utilityTimeConstraints: n x (k+1) specify the fraction of time for each period in a cycle that a layer
 %consumes (this example using a year with 4 periods)
-utilityTimeConstraints = ...
-    [1 0.5 0.25 0.25 0.5; %accessing layer 1 is a 25% FTE commitment
-    2 0.5 0.25 0.25 0.5; %accessing layer 2 is a 50% FTE commitment
-    3 0.5 0.75 0.75 0]; %accessing layer 3 is a 50% FTE commitment
+%utilityTimeConstraints = ...
+%    [1 0.5 0.25 0.25 0.5; %accessing layer 1 is a 25% FTE commitment
+%    2 0.5 0.25 0.25 0.5; %accessing layer 2 is a 50% FTE commitment
+%    3 0.5 0.75 0.75 0]; %accessing layer 3 is a 50% FTE commitment
 
-
+utilityTimeConstraints = [];
+for indexI = 1:size(timeQs,1)
+    utilityTimeConstraints = [utilityTimeConstraints; ...
+        ones(utility_levels,1) * timeQs(1,:)];
+end
+utilityTimeConstraints = [(1:size(utilityTimeConstraints,1))' utilityTimeConstraints];
 
 %define linkages between layers (such as where different layers represent
 %progressive investment in a particular line of utility (e.g., farmland)

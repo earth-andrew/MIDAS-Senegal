@@ -17,8 +17,7 @@ function [ remittanceFee, remittanceRate ] = createRemittanceCosts(locations, va
 %   different countries).  Exceptions for specific unit-unit pairs are made
 %   next
 
-baseCosts = [0 0; ... %same admin3
-    0 0; ... %same admin2, different admin3
+baseCosts = [0 0; ... %same admin2
     0 0; ... %same admin1, different admin2
     0 0; ... %same admin0, different admin1
     0 0]; %different admin0

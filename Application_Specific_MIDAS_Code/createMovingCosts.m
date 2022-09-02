@@ -21,9 +21,8 @@ function [movingCosts ] = createMovingCosts(locations, distanceMatrix, mapParame
 
 %   Specify something similar for moving costs between any two spots
 
-baseMovingCosts = [100000; ... %same admin3
-    200000; ... %same admin2, different admin3
-    500000; ... %same admin1, different admin2
+baseMovingCosts = [100000; ... %same admin2
+    200000; ... %same admin1, different admin2
     500000; ... %same admin0, different admin1
     80000000]; %different admin0
 

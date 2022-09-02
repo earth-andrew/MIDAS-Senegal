@@ -51,7 +51,7 @@ if(~isempty(modelParameters.popFile))
         popTable = readtable(modelParameters.popFile);
     end
     popTable.population = sum(popTable{:,2:end},2);
-    popTable = join(popTable,dataset2table(locations),'LeftKeys',{'geolev2'},'RightKeys',{'source_ID_2'});
+    popTable = join(popTable,dataset2table(locations),'LeftKeys',{'ADM2_PCODE'},'RightKeys',{'source_ID_2'});
     
     %variable names with age bins are of form 'maleX_Y'
     agePointsPopulationMale = popTable.Properties.VariableNames(startsWith(popTable.Properties.VariableNames,'male'));
