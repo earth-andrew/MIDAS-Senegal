@@ -8,10 +8,10 @@ mapParameters.sizeY = 600;
 mapParameters.levelID = '_PCODE';
 mapParameters.levelName = '_FR';
 modelParameters.cycleLength = 4;
-modelParameters.numCycles = 100;
+modelParameters.numCycles = 40;
 modelParameters.incomeInterval = 1;
-modelParameters.visualizeYN = 1;
-modelParameters.listTimeStepYN = 0;
+modelParameters.visualizeYN = 0;
+modelParameters.listTimeStepYN = 1;
 modelParameters.visualizeInterval = 2;
 modelParameters.showMovesOrNetwork = 0; %1 for recent moves, 0 for network
 modelParameters.movesFadeSteps = 12; 
@@ -53,8 +53,8 @@ mapParameters.r1 = []; %this will be the spatial reference if we are pulling fro
 mapParameters.filePath = './Data/Senegal Boundary Files Admin 2/Admin_2_lat_lon.shp';
 mapParameters.saveDirectory = './Outputs/';
 modelParameters.popFile = './Data/senegal_population_extract.xls';
-modelParameters.survivalFile = [];
-modelParameters.fertilityFile = [];
+modelParameters.survivalFile = './Data/mortality_sen.xls';
+modelParameters.fertilityFile = './Data/fert_age_sen.xls';
 modelParameters.agePreferencesFile = './Data/age_specific_params.xls';
 modelParameters.utilityDataPath = './Data';
 modelParameters.saveImg = true;
@@ -115,7 +115,7 @@ if(~isempty(inputs))
    end
 end
 
-modelParameters.timeSteps = modelParameters.spinupTime + 404;  %in this particular experiment only, there are 204 time steps with data
+modelParameters.timeSteps = modelParameters.spinupTime + modelParameters.numCycles * modelParameters.cycleLength;  %in this particular experiment only, there are 204 time steps with data
 
 
 end

@@ -53,7 +53,8 @@ for indexT = 1:modelParameters.timeSteps
         currentAgent.age = currentAgent.age + modelParameters.cyclesPerTimeStep;
 
         %draw number to see if agent survives to this timestep
-        agentSurvives = rand() < interp1([0 demographicVariables.agePointsSurvival], [1 demographicVariables.survivalRate(currentAgent.matrixLocation,:,currentAgent.gender)], currentAgent.age);
+        agentSurvives = rand() < interp1([demographicVariables.agePointsSurvival], [demographicVariables.survivalRate(currentAgent.matrixLocation,:,currentAgent.gender)], currentAgent.age);
+
         if(~agentSurvives)
 
             %don't delete the agent, because we get into a re-indexing
@@ -354,10 +355,13 @@ for indexT = 1:modelParameters.timeSteps
 
     %%%%
     %averageExpectedOpening(:,:,indexT) = 0;
-    for indexI = 1:length(livingAgents)
-        averageExpectedOpening(:,:,indexT) = averageExpectedOpening(:,:,indexT) + livingAgents(indexI).expectedProbOpening;        
+    numLivingAgents = length(livingAgents);
+    if(numLivingAgents > 0)
+        for indexI = 1:length(livingAgents)
+            averageExpectedOpening(:,:,indexT) = averageExpectedOpening(:,:,indexT) + livingAgents(indexI).expectedProbOpening;        
+        end
+        averageExpectedOpening(:,:,indexT) = averageExpectedOpening(:,:,indexT) / indexI;
     end
-    averageExpectedOpening(:,:,indexT) = averageExpectedOpening(:,:,indexT) / indexI;
     %%%%
     
     if(modelParameters.listTimeStepYN)
