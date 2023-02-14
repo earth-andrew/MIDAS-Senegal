@@ -1,5 +1,4 @@
 function [agentList, aliveList, modelParameters, agentParameters, mapParameters, utilityVariables, mapVariables, demographicVariables] = buildWorld(modelParameters, mapParameters, agentParameters, networkParameters)
-
 %create a map based on the defined administrative structure in
 %mapParameters
 if(isempty(mapParameters.filePath))
@@ -9,7 +8,7 @@ else
 end
 
 %define remittance costs based on these locations
-[ remittanceFee, remittanceRate ] = createRemittanceCosts(locations, modelParameters.remitRate);
+[remittanceFee, remittanceRate ] = createRemittanceCosts(locations, modelParameters.remitRate);
 
 %establish population density and likelihood of agent locations
 [locationLikelihood, genderLikelihood, ageLikelihood, survivalRate, fertilityRate, ageDiscountRateFactor, agePointsPopulation, agePointsSurvival, agePointsFertility, agePointsPref] = buildDemography(modelParameters, locations);

@@ -23,14 +23,13 @@ function [ locations, map, borders, mapParameters ] = createMapFromSHP( mapParam
 
 shapeFileName = regexprep(mapParameters.filePath,'.shp','');
 
-try
+try 
     load([shapeFileName '.mat']);
 catch
     
     fprintf('No processed map found.  Building from shape file (This can take some time)...\n');
-    
     shapeData = shaperead(shapeFileName);
-    
+ 
     %identify the number of levels requested
     
     structNames = fieldnames(shapeData);
@@ -179,7 +178,7 @@ catch
     
     cityCenterLocations = [adminUnits(:,end) indexLocations'];
     %store locations in a dataset array
-    locations = dataset({[cityCenterLocations listX' listY' adminUnits],'cityID','LocationIndex','locationX','locationY',layerNames{:}});
+    locations = array2table([cityCenterLocations listX' listY' adminUnits], 'VariableNames',{'cityID','LocationIndex','locationX','locationY',layerNames{:}});
     
     fieldNameList = fieldnames(shapeData);
     fields_ID = contains(fieldnames(shapeData),mapParameters.levelID);
@@ -187,8 +186,8 @@ catch
     
     fields_keep = fields_ID | fields_NAME;
     
-    addFields = struct2dataset(rmfield(shapeData,fieldNameList(~fields_keep)));
-    addFields.Properties.VarNames = strcat('source_',addFields.Properties.VarNames);
+    addFields = struct2table(rmfield(shapeData,fieldNameList(~fields_keep)));
+    addFields.Properties.VariableNames = strcat('source_',addFields.Properties.VariableNames);
     
     locations = horzcat(locations, addFields);
     
