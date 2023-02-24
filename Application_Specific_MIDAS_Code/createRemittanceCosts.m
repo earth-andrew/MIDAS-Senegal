@@ -49,9 +49,9 @@ exceptions = [];% 1 2 20 9; ... %transfers between unit 1 and 2 (country 1 and 2
 %   ordered according to the 'cityID' variable in locations
 
 %make sure the data specified above fits the map
-numLocations = size(locations,1);
+numlocations = size(locations,1);
 numScalesSpecified = size(baseCosts,1);
-scaleVars = strncmp(locations.Properties.VarNames,'AdminUnit', 9);
+scaleVars = strncmp(locations.Properties.VariableNames,'AdminUnit', 9);
 numScalesReceived = sum(scaleVars) + 1;
 if(numScalesSpecified ~= numScalesReceived)
     error('Remittance costs are incompletely specified for defined locations');
@@ -62,11 +62,11 @@ locations = sortrows(locations,'matrixID');
 
 %start with the 'same district' costs, and then replace according to each
 %scale
-remittanceFee = ones(numLocations) * baseCosts(1,1);
-remittanceRate = ones(numLocations) * baseCosts(1,2);
+remittanceFee = ones(numlocations) * baseCosts(1,1);
+remittanceRate = ones(numlocations) * baseCosts(1,2);
 
 %get the lists of admin units
-adminLists = double(locations(:,scaleVars));
+adminLists = table2array(locations(:,scaleVars));
 
 colsFromRight = 0;
 for indexI = 2:numScalesReceived

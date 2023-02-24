@@ -62,7 +62,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%
 leadTime = modelParameters.spinupTime;
 timeSteps = modelParameters.numCycles * modelParameters.cycleLength; 
-utilityHistory = zeros(length(locations),length(utilityLayerFunctions),timeSteps+leadTime);
+utilityHistory = zeros(height(locations),height(utilityLayerFunctions),timeSteps+leadTime);
 
 %%%%%%%%%%%%%%%%%%%%%%%
 %%utilityBaseLayers
@@ -95,7 +95,7 @@ incomeQs =[1 1 1 1; ... %blue collar
 
 quarterShare = incomeQs ./ (sum(incomeQs,2));
 
-utilityBaseLayers = ones(length(locations),length(utilityLayerFunctions),timeSteps);
+utilityBaseLayers = ones(height(locations),height(utilityLayerFunctions),timeSteps);
 for indexI = 1:modelParameters.cycleLength:size(utilityBaseLayers,3)
     utilityBaseLayers(:,:,indexI) = utility_layers;
 end
@@ -139,15 +139,15 @@ end
 accessCodeCount = 1;
 numCodes = sum(localOnly) * utility_levels * size(locations,1) + sum(~localOnly) * utility_levels;
 
-utilityAccessCodesMat = false(numCodes,length(utilityLayerFunctions),length(locations));
+utilityAccessCodesMat = false(numCodes,height(utilityLayerFunctions),height(locations));
 utilityAccessCosts = [];
-for indexI = 1:length(localOnly)
+for indexI = 1:height(localOnly)
    if(localOnly(indexI))
         meanValues = mean(utilityBaseLayers(:,(indexI-1)*utility_levels+1:indexI*utility_levels,:,:),3);
         accessCost = meanValues / (1 + iReturn) * ((1+iDiscount)^iYears -1) / iDiscount / ((1 + iDiscount)^iYears);  %using CCRF to estimate access cost
         for indexJ = 1:utility_levels
-           utilityAccessCosts = [utilityAccessCosts; [(accessCodeCount:accessCodeCount + length(locations)-1)' accessCost(:,indexJ)]];   
-           for indexK = 1:length(locations)
+           utilityAccessCosts = [utilityAccessCosts; [(accessCodeCount:accessCodeCount + height(locations)-1)' accessCost(:,indexJ)]];   
+           for indexK = 1:height(locations)
                utilityAccessCodesMat(accessCodeCount, (indexI-1)*utility_levels+indexJ, indexK) = 1;
                accessCodeCount = accessCodeCount + 1;
            end
@@ -187,12 +187,12 @@ hardSlotCountYN(:,1:15) = true;
 %utility it is, so that they get added and weighted appropriately in
 %calculation.  BY DEFAULT, '1' is income.  THE NUMBER IN UTILITY FORMS
 %CORRESPONDS WITH THE ELEMENT IN THE AGENT'S B LIST.
-utilityForms = zeros(length(utilityLayerFunctions),1);
+utilityForms = zeros(height(utilityLayerFunctions),1);
 
 %Utility form values correspond to the list of utility coefficients in
 %agent utility functions (i.e., numbered 1 to n) ... in null case, all are
 %income (same coefficient)
-utilityForms(1:length(utilityLayerFunctions)) = 1;
+utilityForms(1:height(utilityLayerFunctions)) = 1;
 
 %Income form is either 0 or 1 (with 1 meaning income)
 incomeForms = utilityForms == 1;

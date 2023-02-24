@@ -63,7 +63,7 @@ exceptions = []; %1 2 8000; ... %transfers between unit 1 and 2 (country 1 and 2
 %make sure the data specified above fits the map
 numLocations = size(locations,1);
 numScalesSpecified = size(baseMovingCosts,1);
-scaleVars = strncmp(locations.Properties.VarNames,'AdminUnit', 9);
+scaleVars = strncmp(locations.Properties.VariableNames,'AdminUnit', 9);
 numScalesReceived = sum(scaleVars) + 1;
 if(numScalesSpecified ~= numScalesReceived)
     error('Moving costs are incompletely specified for defined locations');
@@ -78,7 +78,7 @@ locations = sortrows(locations,'matrixID');
 movingCosts = ones(numLocations) * baseMovingCosts(1);
 
 %get the lists of admin units
-adminLists = double(locations(:,scaleVars));
+adminLists = table2array(locations(:,scaleVars));
 
 colsFromRight = 0;
 for indexI = 2:numScalesReceived

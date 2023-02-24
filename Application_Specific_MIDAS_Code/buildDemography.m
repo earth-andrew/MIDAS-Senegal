@@ -51,12 +51,12 @@ if(~isempty(modelParameters.popFile))
         popTable = readtable(modelParameters.popFile);
     end
     popTable.population = sum(popTable{:,2:end},2);
-    popTable = join(popTable,dataset2table(locations),'LeftKeys',{'ADM2_PCODE'},'RightKeys',{'source_ADM2_PCODE'});
+    popTable = join(popTable,locations,'LeftKeys',{'ADM2_PCODE'},'RightKeys',{'source_ADM2_PCODE'});
     
     %variable names with age bins are of form 'maleX_Y'
     agePointsPopulationMale = popTable.Properties.VariableNames(startsWith(popTable.Properties.VariableNames,'male'));
     agePointsPopulationMale = regexprep(agePointsPopulationMale,'male','');
-    for indexI = 1:length(agePointsPopulationMale)
+    for indexI = 1:size(agePointsPopulationMale,2)
         try agePointsPopulationMale{indexI} = extractAfter(agePointsPopulationMale{indexI},strfind(agePointsPopulationMale{indexI},'_'));
         end
     end
@@ -65,7 +65,7 @@ if(~isempty(modelParameters.popFile))
     
     agePointsPopulationFemale = popTable.Properties.VariableNames(startsWith(popTable.Properties.VariableNames,'female'));
     agePointsPopulationFemale = regexprep(agePointsPopulationFemale,'female','');
-    for indexI = 1:length(agePointsPopulationFemale)
+    for indexI = 1:size(agePointsPopulationFemale,2)
         try agePointsPopulationFemale{indexI} = extractAfter(agePointsPopulationFemale{indexI},strfind(agePointsPopulationFemale{indexI},'_'));
         end
     end
@@ -93,7 +93,7 @@ if(~isempty(modelParameters.popFile))
     popTable.female = sum(popTable{:,startsWith(popTable.Properties.VariableNames,'female')},2);
     popTable = popTable(:,{'population','male','female','matrixID'});
     
-    locationLikelihood = zeros(length(locations),1);
+    locationLikelihood = zeros(height(locations),1);
     locationLikelihood(popTable.matrixID) = popTable.population;
     locationLikelihood = locationLikelihood / sum(locationLikelihood);
     locationLikelihood = cumsum(locationLikelihood);
@@ -101,12 +101,12 @@ if(~isempty(modelParameters.popFile))
     genderLikelihood = popTable.male ./ popTable.population;
     genderLikelihood(popTable.matrixID) = genderLikelihood;
 else
-    locationLikelihood = ones(length(locations),1) / length(locations);
+    locationLikelihood = ones(height(locations),1) / height(locations);
     locationLikelihood = cumsum(locationLikelihood);
     agePointsPopulation = [50 100];
-    ageLikelihood = ones(length(locations),1) * [0.5 1];
+    ageLikelihood = ones(height(locations),1) * [0.5 1];
     ageLikelihood(:,:,2) = ageLikelihood;
-    genderLikelihood = rand(length(locations),1);
+    genderLikelihood = rand(height(locations),1);
 end
 
 if(~isempty(modelParameters.survivalFile))
@@ -116,12 +116,12 @@ if(~isempty(modelParameters.survivalFile))
         survivalTable = readtable(modelParameters.survivalFile);
     end
     agePointsSurvival = (survivalTable.MaxAge)';
-    survivalRate = ones(length(locations),1) * (survivalTable.Male)';
-    survivalRate(:,:,2) = ones(length(locations),1) * (survivalTable.Female)';
+    survivalRate = ones(height(locations),1) * (survivalTable.Male)';
+    survivalRate(:,:,2) = ones(height(locations),1) * (survivalTable.Female)';
     survivalRate = 1 - survivalRate;
 else
     agePointsSurvival = agePointsPopulation;
-    survivalRate = 1 - rand(length(locations),length(agePointsSurvival),2) / 200;  %this gives annual likelihood of death up to 2%
+    survivalRate = 1 - rand(height(locations),size(agePointsSurvival),2) / 200;  %this gives annual likelihood of death up to 2%
 end
 
 if(~isempty(modelParameters.fertilityFile))
@@ -132,11 +132,11 @@ if(~isempty(modelParameters.fertilityFile))
     end
     agePointsFertility = (fertilityTable.MaxAge)';
     agePointsFertility = [fertilityTable.MinAge(1) agePointsFertility];
-    fertilityRate = ones(length(locations),1) * (fertilityTable.Births)' / 1000; %this data is births per 1000 women
-    fertilityRate = [zeros(length(locations),1) fertilityRate];
+    fertilityRate = ones(height(locations),1) * (fertilityTable.Births)' / 1000; %this data is births per 1000 women
+    fertilityRate = [zeros(height(locations),1) fertilityRate];
 else
     agePointsFertility = [15 49];
-    fertilityRate = rand(length(locations),length(agePointsFertility)) / 10;  %this gives annual likelihood of birth up to 10%
+    fertilityRate = rand(height(locations),size(agePointsFertility,2)) / 10;  %this gives annual likelihood of birth up to 10%
 end
 
 %any additional age-specific factors ought to be handled here
