@@ -4,10 +4,10 @@ clear functions
 clear classes
 
 addpath('./Core_MIDAS_Code');
-addpath('./Override_Core_MIDAS_Code');
 addpath('./Application_Specific_MIDAS_Code');
+addpath('./Override_Core_MIDAS_Code');
 
-rng('shuffle');
+rng('default');
 
 runName = 'Whatever you want to call this one';
 series = 'MC_Run_';
