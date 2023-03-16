@@ -9,7 +9,7 @@ addpath('./Override_Core_MIDAS_Code');
 
 rng('default');
 
-runName = 'Whatever you want to call this one';
+runName = 'FarmSeasonality';
 series = 'MC_Run_';
 saveDirectory = './Outputs/';
 

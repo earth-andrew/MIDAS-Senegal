@@ -1,0 +1,47 @@
+function selectable = selectableFlag(prereqs,accesscodes, utilityCosts, agentTraining, agentWealth)
+%Script to identify portfolios as "selectable" (agent has met prereqs and
+%can afford costs) or not. Returns logical array of true (selectable) or
+%false (not selectable because of missing prereqs or insufficient savings)
+
+
+portfolioLayers = size(prereqs,1);
+totalcost = 0;
+%numPortfolios = size(portfolios,1); %Number of portfolios to consider, total possible layers in one portfolio
+selectable = ones(portfolioLayers+1); %1 will designate selectable
+
+if (~isempty(agentTraining))
+    traininggap = agentTraining - prereqs; %NxN matrix where -1 indicates a missing prereq for row layer
+
+    for indexI = 1:portfolioLayers
+        %Calculate total cost of accessing layer
+        layercost = sum(utilityCosts(accesscodes(:,indexI)>0,2)); %Adding utility costs to access each layer in portfolio
+
+        if ((any(traininggap(indexI,:) < 0)) || (layercost > agentWealth))
+            selectable(indexI) = 0;
+        end
+
+    end
+end
+
+
+     
+     %If Layer cost exceeds agent wealth, make it unselectable
+     if layercost > agentWealth
+        selectable(indexI) = 0;
+     end
+        
+    totalcost = totalcost + layercost;
+end
+    
+%Check if agent can select the entire portfolio
+if (totalcost > agentWealth) || (any(selectable(indexJ,:)==0))
+    selectable(end) = 0;
+end
+
+
+%Convert to logical array with selectable portfolios set as "true"
+selectable = selectable > 0;
+
+end
+
+

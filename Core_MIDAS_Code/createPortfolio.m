@@ -1,4 +1,4 @@
-function portfolio = createPortfolio(layers, constraints, prereqs, pAdd)
+function portfolio = createPortfolio(layers, constraints, prereqs,pAdd, accesscodes, utilityCosts, agent)
 %createPortfolio draws a random portfolio of utility layers that fit the
 %current time constraint
 
@@ -20,8 +20,11 @@ while(sum(timeRemaining) > 0 && ~isempty(layers))
     if(~portfolio(nextElement))  %if this one isn't already in the portfolio (e.g., it got drawn in as a prereq in a previous iteration)
         %make a temporary portfolio for consideration
 
-        tempPortfolio = portfolio | prereqs(nextElement,:);
-
+        tempPortfolio = portfolio | prereqs(nextElement,:); %This adds the nextElement plus all other prereqs to 1-dimensional portfolio
+        
+        
+    end
+        
         timeUse = sum(constraints(tempPortfolio,2:end),1);
         timeExceedance = sum(sum(timeUse > 1)) > 0;
 
@@ -35,9 +38,16 @@ while(sum(timeRemaining) > 0 && ~isempty(layers))
             timeRemaining = 1 - timeUse;
             layers(sum(constraints(layers,2:end) > timeRemaining,2) > 0) = [];
         end
-    end
+end
+
+%Calling selectable function to identify if this portfolio can currently be
+%selected by agent
+%selectable = selectableFlag(portfolio, prereqs, accesscodes, utilityCosts, agent.currentPortfolio, agent.wealth);
+
 end
 
 
-end
+
+
+
 

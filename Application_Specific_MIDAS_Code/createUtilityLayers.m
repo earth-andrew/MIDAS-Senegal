@@ -28,6 +28,9 @@ function [ utilityLayerFunctions, utilityHistory, utilityAccessCosts, utilityTim
 % x) a flag differentiating the form of utility generated (against which
 % agents may have heterogeneous preferences), utilityForm
 % xi) a binary version of the above identifying income as a utility form
+% xii) A selectable logical array indicating which utility layers can be
+% selected by agent in time t (e.g. whether agents have met pre-reqs and
+% sufficient funds)
 
 %all of these variables are generated here.
 
@@ -232,6 +235,13 @@ utilityPrereqs = zeros(size(utilityTimeConstraints,1));
 %each layer 'requires' itself
 utilityPrereqs = utilityPrereqs + eye(size(utilityTimeConstraints,1));
 utilityPrereqs = sparse(utilityPrereqs);
+
+%Establishing selectable logical array
+selectable = false(size(utilityLayerFunctions,1));
+%for indexI = 1:size(selectable,1)
+    %if 
+    %selectable(indexI) = true;
+%end
 
 %with these linkages in place, need to account for the fact that in the
 %model, any agent occupying Q4 of something will automatically occupy Q1,

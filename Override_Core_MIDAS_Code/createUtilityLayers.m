@@ -81,25 +81,37 @@ localOnly = [0; ... %unskilled 1
 timeQs =[0.5 0.5 0.5 0.5; ... %unskilled 1
     0.5 0.5 0.5 0.5; ... %unskilled 2
     0.75 0.75 0.75 0.75; ... %skilled
-    0 0.5 0.5 0; ... %ag 1
-    0 0.1 0.1 0; ... %ag 2
+    0.0 0.5 0.5 0; ... %ag 1 
+    0.0 0.1 0.1 0; ... %ag 2
     0.5 0.5 0.5 0.5; ... %school
 ];
 
 incomeQs =[1 1 1 1; ... %unskilled 1
     1 1 1 1; ... %unskilled 2
     1 1 1 1; ... %skilled
-    0 0 0 1; ... %ag 1
-    0 0 0 1; ... %ag 2
+    0 0 0 1; ... %ag 1 %Initial 0 0 0 1
+    0 0 0 1; ... %ag 2 %Initial 0 0 0 1
     0 0 0 0];  %school
 
 quarterShare = incomeQs ./ (sum(incomeQs,2));
 quarterShare(isnan(quarterShare)) = 0;
 
 utilityBaseLayers = ones(size(locations,1),size(utilityLayerFunctions,1),timeSteps);
+
+%Adjustment factor for creating spatial variation
+epsilon = 0.0; %proportion of total income that may vary across regions
+climate_epsilon = 0.3; %proportion of total income that may vary across years
 for indexK = 1:size(locations,1)
     for indexI = 1:modelParameters.cycleLength:size(utilityBaseLayers,3)
-        utilityBaseLayers(indexK,:,indexI) = mean_utility_by_layer;
+        %utilityBaseLayers(indexK,:,indexI) = mean_utility_by_layer;
+        for indexJ = 1:size(mean_utility_by_layer,1)
+            if 3 < indexJ < 6
+                utilityBaseLayers(indexK,indexJ,indexI) = mean_utility_by_layer(indexJ,1) * (1 + epsilon * (-1 + 2 * rand(1))) * (1 + climate_epsilon * (-1 + 2 * rand(1)));
+            else
+                utilityBaseLayers(indexK,indexJ,indexI) = mean_utility_by_layer(indexJ,1);
+            end
+        end
+        
     end
 end
 
@@ -135,9 +147,9 @@ end
 %number of different utility layers, and k is the number of locations
 
 utilityAccessCosts = [ ...
-    1 1000; %cost of buying small farm
-    2 4000; %cost of growing to a large farm
-    3 5000; %cost of going to school
+    1 1000; %cost of buying small farm %original 1000
+    2 4000; %cost of growing to a large farm %original 4000
+    3 5000; %cost of going to school %original 5000
     ];
 
 utilityAccessCodesMat = zeros(size(utilityAccessCosts,1), size(mean_utility_by_layer,1), size(locations,1));
@@ -224,6 +236,7 @@ utilityPrereqs(5, 4) = 1; %ag 2 requires ag 1
 utilityPrereqs(3, 6) = 1; %skilled labor requires school
 
 
+
 %each layer 'requires' itself
 utilityPrereqs = utilityPrereqs + eye(size(utilityTimeConstraints,1));
 utilityPrereqs = sparse(utilityPrereqs);
@@ -242,6 +255,9 @@ for indexI = 1:size(nExpected,2)
    tempExpected(:,indexI) = sum(nExpected(:,utilityPrereqs(:,indexI) > 0),2); 
 end
 nExpected = tempExpected;
+
+
+
 
 %%% OTHER EXAMPLE CODE BELOW HERE
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

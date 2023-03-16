@@ -98,6 +98,8 @@ locationPortfolio = cell(length(locationList),1);
 locationAccessCodes = cell(length(locationList),1);
 locationMovingCosts = zeros(length(locationList),1);
 
+%Check which layers are "selectable" based on agent prereqs
+selectable = selectableFlag(utilityVariables.utilityPrereqs, utilityVariables.utilityAccessCodesMat, utilityVariables.utilityAccessCosts, agent.currentPortfolio, agent.wealth);
 
 %for each location, find a good income portfolio - the current portfolio
 %(if this is home city), some other good portfolios from past searches, and
@@ -129,11 +131,7 @@ for indexL = 1:length(locationList)
     
     %last, come up with a few random portfolios to finish
     for indexP = currentPortfolio:totalNumPortfolios
-        nextRandom = createPortfolio(find(any(agent.knowsIncomeLocation(locationList(indexL),:),1)),utilityVariables.utilityTimeConstraints, utilityVariables.utilityPrereqs, agent.pAddFitElement);
-        if(~isempty(nextRandom))
-            portfolioSet(currentPortfolio, nextRandom) = true;
-            currentPortfolio = currentPortfolio + 1;
-        end
+        nextRandom = createPortfolio(find(any(agent.knowsIncomeLocation(locationList(indexL),:),1)),utilityVariables.utilityTimeConstraints, utilityVariables.utilityPrereqs, agent.pAddFitElement, utilityVariables.utilityAccessCodesMat, utilityVariables.utilityAccessCosts, agent);
     end
     
 
@@ -366,6 +364,7 @@ for indexL = 1:length(locationList)
     portfolioSet(exceedsCreditLimit,:) = [];
     portfolioAccessCodes(exceedsCreditLimit) = [];
     
+
     if(~isempty(portfolioSet))
         agent.trapped = 0;
         %sort them
@@ -402,8 +401,17 @@ if(length(indexSorted) > 1)
     end
 end
 
-bestLocation = locationList(choice);
-bestPortfolio = locationPortfolio{choice};
+%If any layers are in bestPortfolio but not selectable, mark as aspiration, move to next best portfolio, until either one is selectable or we get to end of best portfolio list
+if (any(indexSorted(1) == ~selectable))
+    aspiration = indexSorted(1);
+    indexP = 1;
+    while (any(indexSorted(indexP) == ~selectable) && (indexP < length(indexSorted)))    
+        indexP = indexP + 1;
+    end
+
+
+bestPortfolio = indexSorted(indexP);
+bestLocation = locationValue(bestPortfolio);
 
 
 %if the best portfolio isn't where we currently are, we have to move
