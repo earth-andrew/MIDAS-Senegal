@@ -131,7 +131,7 @@ for indexL = 1:length(locationList)
     
     %last, come up with a few random portfolios to finish
     for indexP = currentPortfolio:totalNumPortfolios
-        nextRandom = createPortfolio(find(any(agent.knowsIncomeLocation(locationList(indexL),:),1)),utilityVariables.utilityTimeConstraints, utilityVariables.utilityPrereqs, agent.pAddFitElement, utilityVariables.utilityAccessCodesMat, utilityVariables.utilityAccessCosts, agent);
+        nextRandom = createPortfolio([], find(any(agent.knowsIncomeLocation(locationList(indexL),:),1)),utilityVariables.utilityTimeConstraints, utilityVariables.utilityPrereqs, agent.pAddFitElement, utilityVariables.utilityAccessCodesMat, utilityVariables.utilityAccessCosts, agent, selectable);
     end
     
 

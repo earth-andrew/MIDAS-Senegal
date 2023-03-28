@@ -63,8 +63,8 @@ end
 
 
 %Now check if portfolio (either pre-specified or created through this function) has any aspirational elements
-samplePortfolio = portfolio';
-aspirations = samplePortfolio & ~selectable;
+samplePortfolio = portfolio'
+aspirations = samplePortfolio & ~selectable
 
     
 %If any elements are aspirations, pick one at random and figure out prereqs
@@ -81,8 +81,8 @@ if any(aspirations)
     
     %Add any selectable prereqs to portfolio
     [i,j,s] = find(prereqs); %Indices of layers that are prerequisite for indexA    
-    portfolioPrereqs = j(i==indexA);  
-    portfolioPrereqs(portfolioPrereqs == indexA) = []; %remove own layer from aspiration's prereqs
+    portfolioPrereqs = j(i==indexA);    
+    portfolioPrereqs(indexA) = []; %remove own layer from aspiration's prereqs
            
     if any(portfolioPrereqs)
         samplePortfolio(portfolioPrereqs) = true;       

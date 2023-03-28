@@ -49,6 +49,7 @@ mapParameters.colorSpacing = 20;
 mapParameters.numDivisionMean = [2 8 9];
 mapParameters.numDivisionSD = [0 2 1];
 mapParameters.position = [300 100 600 600];
+modelParameters.samplePortfolios = 100; %Number of example portfolios to create average utility for each aspirational layer
 mapParameters.r1 = []; %this will be the spatial reference if we are pulling from a shape file
 mapParameters.filePath = './Data/Senegal Boundary Files Admin 2/Admin_2_lat_lon.shp';
 mapParameters.saveDirectory = './Outputs/';
@@ -59,6 +60,7 @@ modelParameters.agePreferencesFile = './Data/age_specific_params.xls';
 modelParameters.utilityDataPath = './Data';
 modelParameters.saveImg = true;
 modelParameters.shortName = 'Senegal_test';
+
 agentParameters.currentID = 1;
 agentParameters.incomeShareFractionMean = 0.4;
 agentParameters.incomeShareFractionSD = 0;

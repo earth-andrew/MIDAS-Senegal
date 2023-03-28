@@ -12,9 +12,12 @@ for indexA = 1:length(agentList)
    %currentAgent.currentPortfolio = randperm(length(utilityVariables.utilityLayerFunctions),ceil(length(utilityVariables.utilityLayerFunctions)*rand()));
 
    
+
+   selectable = true(size(utilityVariables.utilityBaseLayers,2),1); %Initially, allow agent to access all layers
+
    %randomly assign a couple of the initial base layers
    
-   currentAgent.currentPortfolio = createPortfolio(find(utilityVariables.utilityBaseLayers(currentAgent.matrixLocation,:,1) ~= -9999),utilityVariables.utilityTimeConstraints, utilityVariables.utilityPrereqs, currentAgent.pAddFitElement, utilityVariables.utilityAccessCodesMat, utilityVariables.utilityAccessCosts, currentAgent);
+   currentAgent.currentPortfolio = createPortfolio([], find(utilityVariables.utilityBaseLayers(currentAgent.matrixLocation,:,1) ~= -9999),utilityVariables.utilityTimeConstraints, utilityVariables.utilityPrereqs, currentAgent.pAddFitElement, utilityVariables.utilityAccessCodesMat, utilityVariables.utilityAccessCosts, currentAgent, selectable);
   
    currentAgent.accessCodesPaid(any(utilityVariables.utilityAccessCodesMat(:,currentAgent.currentPortfolio, currentAgent.matrixLocation),2)) = true;
 

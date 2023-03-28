@@ -24,7 +24,7 @@ if (~isempty(agentTraining))
 end
 
 %Convert to logical array with selectable layers set as "true"
-selectable = selectable > 0;
+selectable = (selectable > 0)';
 
 end
 
