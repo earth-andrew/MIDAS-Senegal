@@ -6,8 +6,7 @@ incomeShareFraction = min(1,max(0,agentParameters.incomeShareFractionMean + rand
 wealth = max(0,agentParameters.wealthMean + randn() * agentParameters.wealthSD);
 numBestLocation = max(1,round(agentParameters.bestLocationMean + randn() * agentParameters.bestLocationSD));
 numBestPortfolio = max(1,round(agentParameters.bestPortfolioMean + randn() * agentParameters.bestPortfolioSD));
-numBestAspirations = numBestPortfolio; %Set number of best aspirations equal to number of best portfolios
-numBestFidelity = numBestPortfolio; %keep track of fidelity length for each best portfolio
+%numBestPortfolioAspirations = max(1,round(agentParameters.bestPortfolioAspirationsMean + randn() * agentParameters.bestPortfolioAspirationsSD));
 
 numRandomLocation = max(1,round(agentParameters.randomLocationMean + randn() * agentParameters.randomLocationSD));
 numRandomPortfolio = max(1,round(agentParameters.randomPortfolioMean + randn() * agentParameters.randomPortfolioSD));
@@ -36,7 +35,6 @@ else
     newAgent = Agent(Inf, location);
 end
 
-
 newAgent.accessCodesPaid = agentParameters.init_accessCodesPaid;
 newAgent.knowsIncomeLocation = agentParameters.init_knowsIncomeLocation;
 newAgent.scratch = sparse(agentParameters.init_incomeLayersHistory(:));
@@ -55,13 +53,12 @@ newAgent.wealth = wealth;
 newAgent.realizedUtility = 0;
 newAgent.numBestLocation = numBestLocation;
 newAgent.numBestPortfolio = numBestPortfolio;
-
+%newAgent.numBestPortfolioAspirations = numBestPortfolioAspirations;
 newAgent.numRandomLocation = numRandomLocation;
 newAgent.numRandomPortfolio = numRandomPortfolio;
 newAgent.bestPortfolios = cell(size(utilityVariables.utilityHistory,1),numBestPortfolio);
-newAgent.bestAspirations = cell(size(utilityVariables.utilityHistory,1), numBestAspirations);
-newAgent.bestFidelity = cell(size(utilityVariables.utilityHistory,1), numBestFidelity);
 newAgent.bestPortfolioValues = zeros(size(utilityVariables.utilityHistory,1),numBestPortfolio);
+%newAgent.bestPortfolioAspirations = cell(size(utilityVariables.utilityHistory,1),numBestPortfolioAspirations);
 newAgent.pInteract = pInteract;
 newAgent.pMeetNew = pMeetNew;
 newAgent.pAddFitElement = pAddFitElement;

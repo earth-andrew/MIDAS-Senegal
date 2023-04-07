@@ -1,4 +1,4 @@
-function [ utilityLayerFunctions, utilityHistory, utilityAccessCosts, utilityTimeConstraints, utilityAccessCodesMat, utilityPrereqs, utilityBaseLayers, utilityForms, incomeForms, nExpected, hardSlotCountYN ] = createUtilityLayers(locations, modelParameters, demographicVariables )
+function [ utilityLayerFunctions, utilityHistory, utilityAccessCosts, utilityTimeConstraints, utilityDuration, utilityAccessCodesMat, utilityPrereqs, utilityBaseLayers, utilityForms, incomeForms, nExpected, hardSlotCountYN ] = createUtilityLayers(locations, modelParameters, demographicVariables )
 %createUtilityLayers defines the different income/utility layers (and the
 %functions that generate them)
 
@@ -92,6 +92,15 @@ incomeQs =[1 1 1 1; ... %unskilled 1
     0 0 0 1; ... %ag 1 %Initial 0 0 0 1
     0 0 0 1; ... %ag 2 %Initial 0 0 0 1
     0 0 0 0];  %school
+
+%Array specifying the minimum number of cycles that each layer entails
+utilityDuration = [4; %unskilled 1
+    4; %unskilled 2
+    12; %skilled
+    4; %ag 1
+    4; %ag 2
+    16; %school
+    ];
 
 quarterShare = incomeQs ./ (sum(incomeQs,2));
 quarterShare(isnan(quarterShare)) = 0;

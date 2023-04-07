@@ -1,6 +1,6 @@
 function [agentList, aliveList, modelParameters, agentParameters, mapParameters, utilityVariables, mapVariables, demographicVariables] = buildWorld(modelParameters, mapParameters, agentParameters, networkParameters)
-%create a map based on the defined administrative structure in
-%mapParameters
+
+%create a map based on the defined administrative structure in mapParameters
 if(isempty(mapParameters.filePath))
     [locations, map, borders] = createMap( modelParameters, mapParameters);
 else
@@ -37,12 +37,13 @@ demographicVariables.ageDiscountRateFactor = ageDiscountRateFactor;
 %they experienced or learned.  This structure allows an arbitrarily large
 %landscape with an arbitrarily large number of agents, without wasting
 %memory
-[utilityLayerFunctions, utilityHistory, utilityAccessCosts, utilityTimeConstraints, utilityAccessCodesMat, utilityPrereqs, utilityBaseLayers, utilityForms, incomeForms, nExpected, hardSlotCountYN] = createUtilityLayers(locations, modelParameters, demographicVariables);
+[utilityLayerFunctions, utilityHistory, utilityAccessCosts, utilityTimeConstraints, utilityDuration, utilityAccessCodesMat, utilityPrereqs, utilityBaseLayers, utilityForms, incomeForms, nExpected, hardSlotCountYN] = createUtilityLayers(locations, modelParameters, demographicVariables);
 
 utilityVariables.numForms = max(utilityForms);
 utilityVariables.utilityLayerFunctions = utilityLayerFunctions;
 utilityVariables.utilityHistory = utilityHistory;
 utilityVariables.utilityAccessCosts = utilityAccessCosts;
+utilityVariables.utilityDuration = utilityDuration;
 utilityVariables.utilityTimeConstraints = utilityTimeConstraints;
 utilityVariables.utilityAccessCodesMat = utilityAccessCodesMat;
 utilityVariables.utilityBaseLayers = utilityBaseLayers;

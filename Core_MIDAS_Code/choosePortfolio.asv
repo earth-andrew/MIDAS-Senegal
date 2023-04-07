@@ -161,7 +161,7 @@ for indexL = 1:length(locationList)
     [bSort,iSort] = sort(binaryPortfolio);
     portfolioSet = portfolioSet(iSort([true; diff(bSort)>0]),:);
     aspirationSet = aspirationSet(iSort([true; diff(bSort)>0]),:);%CHECK IF THIS IS CONSISTENT WAY TO SORT ASPIRATION SET
-    fidelitySet = fidelitySet(iSort([true; diff(bSort)>0]));
+    fidelitySet = fidelitySet(iSort([true; diff(bSort)>0]))
     %identify which layers are used across any of the portfolios being
     %evaluated (so we can ignore the rest)
     usedIncomeLayers = any(portfolioSet,1);

@@ -17,10 +17,11 @@ for indexA = 1:length(agentList)
 
    %randomly assign a couple of the initial base layers
    
-   [currentAgent.currentPortfolio,currentAgent.currentAspiration,currentAgent.currentFidelity] = createPortfolio([], find(utilityVariables.utilityBaseLayers(currentAgent.matrixLocation,:,1) ~= -9999),utilityVariables.utilityTimeConstraints, utilityVariables.utilityPrereqs, currentAgent.pAddFitElement, utilityVariables.utilityAccessCodesMat, utilityVariables.utilityAccessCosts, utilityVariables.utilityDuration, currentAgent.numPeriodsEvaluate, selectable);
+   [currentAgent.currentPortfolio,currentAgent.,~] = createPortfolio([], find(utilityVariables.utilityBaseLayers(currentAgent.matrixLocation,:,1) ~= -9999),utilityVariables.utilityTimeConstraints, utilityVariables.utilityPrereqs, currentAgent.pAddFitElement, utilityVariables.utilityAccessCodesMat, utilityVariables.utilityAccessCosts, utilityVariables.utilityDuration, currentAgent.numPeriodsEvaluate, selectable)
   
    currentAgent.accessCodesPaid(any(utilityVariables.utilityAccessCodesMat(:,currentAgent.currentPortfolio, currentAgent.matrixLocation),2)) = true;
 
    currentAgent.firstPortfolio = currentAgent.currentPortfolio;
+   currentAgent.firstAspiration = currentAgent.currentAspiration;
 end
 

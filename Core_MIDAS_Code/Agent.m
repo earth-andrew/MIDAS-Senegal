@@ -20,6 +20,8 @@ classdef Agent < handle
        myIndexInNetwork
        accessCodesPaid
        bestPortfolios
+       bestAspirations
+       bestFidelity
        bestPortfolioValues
        knowsIncomeLocation
        incomeLayersHistory
@@ -30,6 +32,8 @@ classdef Agent < handle
        timeProbOpeningUpdated
        %incomeLayersTest
        currentPortfolio
+       currentAspiration
+       currentFidelity
        firstPortfolio
        personalIncomeHistory
        currentSharedIn

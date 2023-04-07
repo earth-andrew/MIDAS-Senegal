@@ -1,26 +1,24 @@
-function portfolio = createPortfolio(portfolio, layers, constraints, prereqs,pAdd, accesscodes, utilityCosts, agent, selectable)
+function [portfolio, aspiration, highfidelityDuration] = createPortfolio(portfolio, layers, constraints, prereqs,pAdd, accesscodes, utilityCosts, utilityDuration, numPeriodsEvaluate, selectable)
 %createPortfolio draws a random portfolio of utility layers that fit the current time constraint
 
 %Steps:
-%1a. If portfolio specified, identify if any elements are aspirational (i.e. not selectable)
-%1b. If there are aspirational elements, fill out high-fidelity portfolio with prereqs that are selectable
-%1c. With time remaining, fill out remaining high-fidelity portfolio with other selectable layers
-%2. If portfolio not specified, create random portfolio from scratch as
-%before
-%3. Return high-fidelity portfoliio and aspiration (if applicable)
+%1. If a portfolio is not specified as part of argument, create one at random 
+%2. Check if there are any aspirational elements to portfolio
+%3. If there are aspirational elements in portfolio, fill out high-fidelity portfolio with prereqs that are selectable
+%4. With time remaining, fill out remaining high-fidelity portfolio with other selectable layers
+%5a. If there are prereqs set high-fidelity portfolio duration to max
+%prereq duration or agent evaluation period, whichever is shorter
+%5b. if there are no prereqs, set high-fidelity portfolio to max duration
+%of portfolio layer or agent evaluation period, whichever is shorter
+%6. Return high-fidelity portfoliio, duration, and aspiration (if applicable)
 
-%Start Test Data
-%samplePortfolio = [true; ...
-    %true; ...
-    %false; ...
-    %false; ...
-    %false; ...
-    %false];
-
-%End Test Data
 
 %start with all the time in the world
 timeRemaining = ones(1, size(constraints,2)-1);  %will be as long as the cycle defined for layers
+%indAspiration = 0;
+aspiration = false(1,size(constraints,1)); %Initialize blank column array of aspirations
+portfolioPrereqs = []; %Initialize blank array of potential prereqs for portfolio aspiration
+highfidelityDuration = numPeriodsEvaluate; %Initialize duration of high-fidelity portion to be equal to agent's evaluation period
 
 %First check if portfolio is specified. If not, create one at random (original code)
 if isempty(portfolio)
@@ -69,23 +67,26 @@ aspirations = samplePortfolio & ~selectable;
     
 %If any elements are aspirations, pick one at random and figure out prereqs
 if any(aspirations)
-    indAspirations = find(aspirations);
-    samplePortfolio(indAspirations) = false;
+    indAspiration = find(aspirations);
+    samplePortfolio(indAspiration) = false;
 
     %Select one aspiration at random
-    if length(indAspirations) > 1
-        indexA = randsample(indAspirations,1);
-    else
-        indexA = indAspirations;
+    if length(indAspiration) > 1
+        indAspiration = randsample(indAspiration,1);
     end
+    aspiration(1,indAspiration) = true;
+    
     
     %Add any selectable prereqs to portfolio
-    [i,j,s] = find(prereqs); %Indices of layers that are prerequisite for indexA    
-    portfolioPrereqs = j(i==indexA);  
-    portfolioPrereqs(portfolioPrereqs == indexA) = []; %remove own layer from aspiration's prereqs
+    [i,j,s] = find(prereqs); %Indices of layers that are prerequisite for indexA
+    
+    portfolioPrereqs = j(i==indAspiration); 
+    portfolioPrereqs(portfolioPrereqs == indAspiration) = []; %remove own layer from aspiration's prereqs
            
+    %Add check for selectable prereqs
     if any(portfolioPrereqs)
-        samplePortfolio(portfolioPrereqs) = true;       
+        samplePortfolio(portfolioPrereqs) = true;
+        duration = utilityDuration(portfolioPrereqs); %Array of minimum time durations for pre-reqs
     end
         
     %If time is exceeded, remove layers one by one    
@@ -95,7 +96,6 @@ if any(aspirations)
         samplePortfolio(randsample(tempLayers,1)) = false;    
         timeRemaining = 1 - sum(constraints(samplePortfolio,2:end));    
     end
-
 end
 
     
@@ -107,6 +107,14 @@ while sum(timeRemaining) > 0 && any(selectableLayers)
     samplePortfolio(indexS) = true;    
     timeRemaining = 1 - sum(constraints(samplePortfolio,2:end));    
     selectableLayers(indexS) = false;    
+end
+
+%Now, figure out duration
+if any(portfolioPrereqs) && (max(duration) < numPeriodsEvaluate)
+    highfidelityDuration = max(duration);
+else
+    highfidelityDuration = numPeriodsEvaluate;
+
 end
 
 end
