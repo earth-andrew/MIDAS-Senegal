@@ -240,9 +240,9 @@ utilityPrereqs = zeros(size(utilityTimeConstraints,1));
 % end
 
 %in the form utilityPrereqs('this layer' , 'requires this layer') = 1;
-utilityPrereqs(2, 1) = 1; %unskilled 2 requires unskilled 1
-utilityPrereqs(5, 4) = 1; %ag 2 requires ag 1
-utilityPrereqs(3, 6) = 1; %skilled labor requires school
+utilityPrereqs(2, 1) = 0; %unskilled 2 requires unskilled 1
+utilityPrereqs(5, 4) = 0; %ag 2 requires ag 1
+utilityPrereqs(3, 6) = 0; %skilled labor requires school
 
 
 

@@ -15,14 +15,12 @@ function [portfolio, aspiration, highfidelityDuration] = createPortfolio(portfol
 
 %start with all the time in the world
 timeRemaining = ones(1, size(constraints,2)-1);  %will be as long as the cycle defined for layers
-%indAspiration = 0;
 aspiration = false(1,size(constraints,1)); %Initialize blank column array of aspirations
 portfolioPrereqs = []; %Initialize blank array of potential prereqs for portfolio aspiration
 highfidelityDuration = numPeriodsEvaluate; %Initialize duration of high-fidelity portion to be equal to agent's evaluation period
-
 %First check if portfolio is specified. If not, create one at random (original code)
 if isempty(portfolio)
-    %initialize an empty portfolio
+    %initialize an empty portfoliso
     portfolio = false(1,size(constraints,1));
     
     %while we still have time left and layers that fit
@@ -114,9 +112,9 @@ if any(portfolioPrereqs) && (max(duration) < numPeriodsEvaluate)
     highfidelityDuration = max(duration);
 else
     highfidelityDuration = numPeriodsEvaluate;
-
 end
 
+portfolio = samplePortfolio';
 end
 
 

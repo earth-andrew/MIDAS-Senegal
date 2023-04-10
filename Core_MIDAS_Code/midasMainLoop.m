@@ -45,7 +45,7 @@ for indexT = 1:modelParameters.timeSteps
     currentRandOrder = randperm(length(livingAgents));
 
     %Update average utilities for aspirational portfolios
-    numPortfolios = 10;
+    %numPortfolios = 10;
     utilityVariables.aspirations = aspirationalPortfolio(utilityVariables.utilityBaseLayers(:,:,indexT), modelParameters.samplePortfolios, utilityVariables.utilityPrereqs, utilityVariables.utilityTimeConstraints);
 
     %update agent age, information and preferences, looping across agents

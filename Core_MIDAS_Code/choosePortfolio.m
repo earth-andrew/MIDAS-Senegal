@@ -101,7 +101,7 @@ locationAccessCodes = cell(length(locationList),1);
 locationMovingCosts = zeros(length(locationList),1);
 
 %Check which layers are "selectable" based on agent prereqs
-selectable = selectableFlag(utilityVariables.utilityPrereqs, utilityVariables.utilityAccessCodesMat, utilityVariables.utilityAccessCosts, agent.currentPortfolio, agent.wealth);
+selectable = selectableFlag(utilityVariables.utilityPrereqs, utilityVariables.utilityAccessCodesMat, utilityVariables.utilityAccessCosts, agent.incomeLayersHistory, agent.wealth, currentT);
 
 %for each location, find a good income portfolio - the current portfolio
 %(if this is home city), some other good portfolios from past searches, and
@@ -309,7 +309,7 @@ for indexL = 1:length(locationList)
         %dump all layers into a single time series with each element being
         %the sum of expected layer income in each period. 
         currentPortfolio = portfolioSubSet(indexP,:)  * portfolioData(:,1:fidelitySet(indexP));
-        currentAspiration = aspirationSet(indexP) .* ones(1,agent.numPeriodsEvaluate - fidelitySet(indexP));
+        currentAspiration = aspirationSet(indexP,:) * utilityVariables.aspirations .* ones(1,agent.numPeriodsEvaluate - fidelitySet(indexP)); %Aspirations expressed as logical values .* avg utility for each aspirational layer .* vector of ones to make up for remaining time periods
         %Add in incomes from aspirational portfolio and concatenate
         currentPortfolio = [currentPortfolio currentAspiration];
 
