@@ -10,12 +10,11 @@ addpath('./Core_MIDAS_Code');
 rng('shuffle');
 
 outputList = {};
-
 series = 'MC_Run_';
 saveDirectory = './Outputs/';
 
 %number of runs
-modelRuns = 1000;
+modelRuns = 10;
 
 try load updatedMCParams
 catch
@@ -113,8 +112,8 @@ save([saveDirectory 'experiment_' date '_input_summary'], 'experimentList', 'mcP
 
 runList = zeros(length(experimentList),1);
 %run the model
-parfor indexI = 1:length(experimentList)
-%for indexI = 1:length(experimentList)
+%parfor indexI = 1:length(experimentList)
+for indexI = 1:length(experimentList)
     if(runList(indexI) == 0)
         input = experimentList{indexI};
         

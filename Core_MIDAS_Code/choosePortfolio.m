@@ -141,7 +141,7 @@ for indexL = 1:length(locationList)
     
     %last, come up with a few random portfolios to finish
     for indexP = currentPortfolio:totalNumPortfolios
-        [nextRandom,nextAspiration,nextFidelity] = createPortfolio([], find(any(agent.knowsIncomeLocation(locationList(indexL),:),1)),utilityVariables.utilityTimeConstraints, utilityVariables.utilityPrereqs, agent.pAddFitElement,  utilityVariables.utilityAccessCodesMat, utilityVariables.utilityAccessCosts, utilityVariables.utilityDuration, agent.numPeriodsEvaluate, selectable);
+        [nextRandom,nextAspiration,nextFidelity] = createPortfolio([], find(any(agent.knowsIncomeLocation(locationList(indexL),:),1)),utilityVariables.utilityTimeConstraints, utilityVariables.utilityPrereqs, agent.pAddFitElement,  utilityVariables.utilityAccessCodesMat, utilityVariables.utilityAccessCosts, utilityVariables.utilityDuration, agent.numPeriodsEvaluate, selectable, utilityVariables.utilityHistory(indexL,:,currentT-1), agent.wealth, agent.pBackCast);
         if(~isempty(nextRandom))
             portfolioSet(currentPortfolio, nextRandom) = true;
             aspirationSet(currentPortfolio,nextAspiration) = true;

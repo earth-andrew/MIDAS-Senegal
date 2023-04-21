@@ -38,7 +38,6 @@ demographicVariables.ageDiscountRateFactor = ageDiscountRateFactor;
 %landscape with an arbitrarily large number of agents, without wasting
 %memory
 [utilityLayerFunctions, utilityHistory, utilityAccessCosts, utilityTimeConstraints, utilityDuration, utilityAccessCodesMat, utilityPrereqs, utilityBaseLayers, utilityForms, incomeForms, nExpected, hardSlotCountYN] = createUtilityLayers(locations, modelParameters, demographicVariables);
-
 utilityVariables.numForms = max(utilityForms);
 utilityVariables.utilityLayerFunctions = utilityLayerFunctions;
 utilityVariables.utilityHistory = utilityHistory;

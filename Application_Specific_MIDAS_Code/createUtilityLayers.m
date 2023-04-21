@@ -1,4 +1,4 @@
-function [ utilityLayerFunctions, utilityHistory, utilityAccessCosts, utilityTimeConstraints, utilityAccessCodesMat, utilityPrereqs, utilityBaseLayers, utilityForms, incomeForms, nExpected, hardSlotCountYN ] = createUtilityLayers(locations, modelParameters, demographicVariables )
+function [ utilityLayerFunctions, utilityHistory, utilityAccessCosts, utilityTimeConstraints, utilityDuration, utilityAccessCodesMat, utilityPrereqs, utilityBaseLayers, utilityForms, incomeForms, nExpected, hardSlotCountYN ] = createUtilityLayers(locations, modelParameters, demographicVariables )
 %createUtilityLayers defines the different income/utility layers (and the
 %functions that generate them)
 
@@ -95,6 +95,13 @@ incomeQs =[1 1 1 1; ... %blue collar
     0 0 0 1; ... %ag-fish
     0 0 1 0; ... %livestock
     1 1 1 1];  %small business
+
+utilityDuration = [1;
+                   1;
+                   1;
+                   1;
+                   1;
+                   1]
 
 quarterShare = incomeQs ./ (sum(incomeQs,2));
 
@@ -232,16 +239,17 @@ utilityPrereqs = zeros(size(utilityTimeConstraints,1));
 %    utilityPrereqs(indexI-2, indexI-3) = 1; 
 % end
 
+
+%in the form utilityPrereqs('this layer' , 'requires this layer') = 1;
+utilityPrereqs(2, 1) = 0; %unskilled 2 requires unskilled 1
+utilityPrereqs(5, 4) = 0; %ag 2 requires ag 1
+utilityPrereqs(3, 6) = 1; %skilled labor requires school
+
+
+
 %each layer 'requires' itself
 utilityPrereqs = utilityPrereqs + eye(size(utilityTimeConstraints,1));
 utilityPrereqs = sparse(utilityPrereqs);
-
-%Establishing selectable logical array
-selectable = false(size(utilityLayerFunctions,1));
-%for indexI = 1:size(selectable,1)
-    %if 
-    %selectable(indexI) = true;
-%end
 
 %with these linkages in place, need to account for the fact that in the
 %model, any agent occupying Q4 of something will automatically occupy Q1,

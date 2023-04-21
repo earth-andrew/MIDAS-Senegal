@@ -217,11 +217,12 @@ for indexT = 1:modelParameters.timeSteps
         end
         clear temp;
         
+
         %draw number to see if agent updates preferences on where to
         %be/what to do
         if(rand() < currentAgent.pChoose && indexT > modelParameters.spinupTime && currentAgent.age >= modelParameters.ageDecision)
             [currentAgent, moved] = choosePortfolio(currentAgent, utilityVariables, indexT, modelParameters, mapParameters, demographicVariables, mapVariables);
-            aspirationHistory(:,indexT) = aspirationHistory(:,indexT) + currentAgent.currentAspiration';
+            aspirationHistory(index)
             if(~isempty(moved))
                 migrations(indexT) = migrations(indexT) + 1;
                 inMigrations(moved(2), indexT) = inMigrations(moved(2), indexT) + 1;
@@ -272,7 +273,7 @@ for indexT = 1:modelParameters.timeSteps
             
             %find out how much the current agent made, from each layer, and
             %update their knowledge
-            
+
             newIncome = sum(utilityVariables.utilityHistory(currentAgent.matrixLocation,currentAgent.currentPortfolio(utilityVariables.incomeForms(currentAgent.currentPortfolio)), indexT));
 
             
@@ -333,7 +334,11 @@ for indexT = 1:modelParameters.timeSteps
 
     %update our time path of trapped agents
     trappedHistory([agentList(:).trapped] > 0,indexT) = 1;
+    aspirationHistory(:,indexT) = agentList(:).currentAspiration;   
     %Count number of agents with aspiration for each layer in time T
+    for indexL = 1:1:numLayers
+        aspirationHistory([agentList(:).currentAspiration(indexL)] == 1, indexT) = indexL;
+    end
    
     if (modelParameters.visualizeYN & mod(indexT, modelParameters.visualizeInterval) == 0)
         
