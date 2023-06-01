@@ -21,10 +21,13 @@ classdef Agent < handle
        accessCodesPaid
        bestPortfolios
        bestAspirations
+       consideredPortfolios
+       consideredHistory
        bestFidelity
        bestPortfolioValues
        knowsIncomeLocation
        incomeLayersHistory
+       training
        scratch;
        overlap
        heardOpening

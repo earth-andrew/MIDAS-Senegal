@@ -38,7 +38,7 @@ function [portfolio, aspiration, highfidelityDuration] = createPortfolio(portfol
 
 
 %To-DO:
-%1) Figure out how to add an interim portfolio
+%1) Figure out how to add an intermediate portfolio
 
 
 %start with all the time in the world
@@ -243,6 +243,10 @@ if isempty(portfolio)
 
   end
  
+%Test for empty portfolios
+if isempty(portfolio)
+    test = 'empty portfolio in createPortfolio'
+end
 end
 
 

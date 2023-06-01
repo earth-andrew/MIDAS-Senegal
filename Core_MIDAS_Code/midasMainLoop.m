@@ -222,16 +222,19 @@ for indexT = 1:modelParameters.timeSteps
         if(rand() < currentAgent.pChoose && indexT > modelParameters.spinupTime && currentAgent.age >= modelParameters.ageDecision)
             [currentAgent, moved] = choosePortfolio(currentAgent, utilityVariables, indexT, modelParameters, mapParameters, demographicVariables, mapVariables);
             aspirationHistory(:,indexT) = aspirationHistory(:,indexT) + currentAgent.currentAspiration';
+            currentAgent.consideredHistory{indexT} = currentAgent.consideredPortfolios;
             if(~isempty(moved))
                 migrations(indexT) = migrations(indexT) + 1;
                 inMigrations(moved(2), indexT) = inMigrations(moved(2), indexT) + 1;
                 outMigrations(moved(1), indexT) = outMigrations(moved(1), indexT) + 1;
                 migrationMatrix(moved(1),moved(2),indexT) = migrationMatrix(moved(1),moved(2),indexT) + 1;
                 currentAgent.moveHistory = [currentAgent.moveHistory; indexT currentAgent.matrixLocation currentAgent.visX currentAgent.visY];
+                
             end
             
             %update these line in the arrays used to choose new links
             agentLayers(currentAgent.id,:) = currentAgent.currentPortfolio;
+            
             agentLocations(currentAgent.id) = currentAgent.matrixLocation;
         end
        
@@ -419,9 +422,13 @@ tempFirstPortfolio = cell(length(agentList),1);
 tempNetwork = cell(length(agentList),1);
 tempMove = cell(length(agentList),1);
 tempAccess = cell(length(agentList),1);
+tempConsideredHistory = cell(length(agentList),1);
+tempTraining = cell(length(agentList),1);
 for indexI = 1:length(agentList)
     tempCurrentPortfolio{indexI} = agentList(indexI).currentPortfolio;
     tempFirstPortfolio{indexI} = agentList(indexI).firstPortfolio;
+    tempConsideredHistory{indexI} = agentList(indexI).consideredHistory;
+    tempTraining{indexI} = agentList(indexI).training;
     try
     tempNetwork{indexI} = [agentList(indexI).network(:).id];
     catch
@@ -432,9 +439,11 @@ for indexI = 1:length(agentList)
 end
 agentSummary.currentPortfolio = tempCurrentPortfolio;
 agentSummary.firstPortfolio = tempFirstPortfolio;
+agentSummary.consideredHistory = tempConsideredHistory;
 agentSummary.network = tempNetwork;
 agentSummary.moveHistory = tempMove;
 agentSummary.accessCodes = tempAccess;
+agentSummary.training = tempTraining;
 
 outputs.agentSummary = agentSummary;
 

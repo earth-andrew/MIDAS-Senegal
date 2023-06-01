@@ -39,6 +39,7 @@ mean_utility_by_layer = [10; ... %unskilled 1
     0; ... %school
 ];
 
+
 %%%%%%%%%%%%%%%%%%%%%%%
 %%utilityLayerFunctions
 %%%%%%%%%%%%%%%%%%%%%%%
@@ -53,7 +54,7 @@ mean_utility_by_layer = [10; ... %unskilled 1
 
 utilityLayerFunctions = [];
 for indexI = 1:(size(mean_utility_by_layer,1))  %16 (or 13) different sources, with 4 levels
-    utilityLayerFunctions{indexI,1} = @(k,m,nExpected,n_actual, base) base * (m * nExpected) / (max(0, n_actual - m * nExpected) * k + m * nExpected);   %some income layer - base layer input times density-dependent extinction
+    utilityLayerFunctions{indexI,1} = @(k,m,nExpected,n_actual, base) base * (m * nExpected) / (max(1, n_actual - m * nExpected) * k + m * nExpected);   %some income layer - base layer input times density-dependent extinction
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%
@@ -94,12 +95,12 @@ incomeQs =[1 1 1 1; ... %unskilled 1
     0 0 0 0];  %school
 
 % N x 2 Matrix specifying the [minimum, maximum] number of cycles that each layer entails
-utilityDuration = [4 inf; %unskilled 1
-    4 inf; %unskilled 2
-    12 inf; %skilled
-    4 inf; %ag 1
+utilityDuration = [1 inf; %unskilled 1
+    2 inf; %unskilled 2
+    3 inf; %skilled
+    2 inf; %ag 1
     4 inf; %ag 2
-    16 16; %school
+    4 4; %school
     ];
 
 quarterShare = incomeQs ./ (sum(incomeQs,2));
@@ -115,9 +116,9 @@ for indexK = 1:size(locations,1)
         %utilityBaseLayers(indexK,:,indexI) = mean_utility_by_layer;
         for indexJ = 1:size(mean_utility_by_layer,1)
             if 3 < indexJ < 6
-                utilityBaseLayers(indexK,indexJ,indexI) = mean_utility_by_layer(indexJ,1) * (1 + epsilon * (-1 + 2 * rand(1))) * (1 + climate_epsilon * (-1 + 2 * rand(1)));
+                utilityBaseLayers(indexK,indexJ,indexI:indexI + modelParameters.cycleLength -1) = mean_utility_by_layer(indexJ,1) * (1 + epsilon * (-1 + 2 * rand(1))) * (1 + climate_epsilon * (-1 + 2 * rand(1)));
             else
-                utilityBaseLayers(indexK,indexJ,indexI) = mean_utility_by_layer(indexJ,1);
+                utilityBaseLayers(indexK,indexJ,indexI:indexI + modelParameters.cycleLength -1) = mean_utility_by_layer(indexJ,1);
             end
         end
         
@@ -156,9 +157,9 @@ end
 %number of different utility layers, and k is the number of locations
 
 utilityAccessCosts = [ ...
-    1 100; %cost of buying small farm %original 1000
-    2 400; %cost of growing to a large farm %original 4000
-    6 200; %cost of going to school %original 5000
+    1 modelParameters.smallFarmCost; %cost of buying small farm %original 1000
+    2 modelParameters.largeFarmCost; %cost of growing to a large farm %original 4000
+    6 modelParameters.educationCost; %cost of going to school %original 5000
     ];
 
 utilityAccessCodesMat = zeros(size(utilityAccessCosts,1), size(mean_utility_by_layer,1), size(locations,1));
@@ -187,16 +188,16 @@ nExpected =  zeros(size(locations,1),size(mean_utility_by_layer,1));
 
 %let initial occupation be about 40% in unskilled 1, 15% in unskilled 2,
 %and 5% in skilled; 40% in ag 1, 20% in ag 2, and 10% in school.
-nExpected(:,1) = floor(numAgentsModel * 0.4);
-nExpected(:,2) = floor(numAgentsModel * 0.15);
+nExpected(:,1) = floor(numAgentsModel * 0.4); 
+nExpected(:,2) = floor(numAgentsModel * 0.15); 
 nExpected(:,3) = floor(numAgentsModel * 0.05);
 nExpected(:,4) = floor(numAgentsModel * 0.4);
 nExpected(:,5) = floor(numAgentsModel * 0.2);
 nExpected(:,6) = floor(numAgentsModel * 0.1);
 
 hardSlotCountYN = false(size(nExpected));
-hardSlotCountYN(:,3) = true;  %skilled labor opportunities represent fixed job opportunities
-hardSlotCountYN(:,6) = true;  %schools have fixed numbers of seats available
+hardSlotCountYN(:,3) = false;  %skilled labor opportunities represent fixed job opportunities
+hardSlotCountYN(:,6) = false;  %schools have fixed numbers of seats available
 
 %utility layers may be income, use value, etc.  identify what form of
 %utility it is, so that they get added and weighted appropriately in

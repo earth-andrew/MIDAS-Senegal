@@ -1,4 +1,4 @@
-function newAgent = initializeAgent(agentParameters, utilityVariables, age, gender, location, varargin)
+function newAgent = initializeAgent(agentParameters, utilityVariables, modelParameters, age, gender, location, varargin)
 
 knowledgeShareFrac = min(1,max(0,agentParameters.knowledgeShareFracMean + randn() * agentParameters.knowledgeShareFracSD));
 shareCostThreshold = min(1,max(0,agentParameters.shareCostThresholdMean + randn() * agentParameters.shareCostThresholdSD));
@@ -63,6 +63,9 @@ newAgent.bestPortfolios = cell(size(utilityVariables.utilityHistory,1),numBestPo
 newAgent.bestAspirations = cell(size(utilityVariables.utilityHistory,1), numBestAspirations);
 newAgent.bestFidelity = cell(size(utilityVariables.utilityHistory,1), numBestFidelity);
 newAgent.bestPortfolioValues = zeros(size(utilityVariables.utilityHistory,1),numBestPortfolio);
+newAgent.consideredPortfolios = [];
+newAgent.training = [];
+newAgent.consideredHistory = cell(size(modelParameters.timeSteps,1));
 newAgent.pInteract = pInteract;
 newAgent.pMeetNew = pMeetNew;
 newAgent.pAddFitElement = pAddFitElement;

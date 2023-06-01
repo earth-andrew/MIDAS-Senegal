@@ -99,9 +99,11 @@ locationAspiration = cell(length(locationList),1);
 locationFidelity = cell(length(locationList),1);
 locationAccessCodes = cell(length(locationList),1);
 locationMovingCosts = zeros(length(locationList),1);
+consideredPortfolioSet = []; %List of portfolios considered by agent across all locations in this time step
 
 %Check which layers are "selectable" based on agent prereqs
-selectable = selectableFlag(utilityVariables.utilityPrereqs, utilityVariables.utilityAccessCodesMat, utilityVariables.utilityAccessCosts, agent.incomeLayersHistory, agent.wealth, currentT);
+%NOTE - agent training needs to be changed to accesscodespaid
+selectable = selectableFlag(utilityVariables.utilityPrereqs, utilityVariables.utilityAccessCodesMat, utilityVariables.utilityAccessCosts, agent.training, agent.wealth, currentT);
 
 %for each location, find a good income portfolio - the current portfolio
 %(if this is home city), some other good portfolios from past searches, and
@@ -295,10 +297,12 @@ for indexL = 1:length(locationList)
     %only layers in use; portfolioSet is sized to include ALL layers, so we
     %make a subset, and then apply any weightings, including UTILITY
     %WEIGHTS and EXPECTATIONS OF GETTING ACCESS
-    
     portfolioSubSet = portfolioSet;
-    portfolioSubSet = portfolioSubSet .* agent.bList(utilityVariables.utilityForms)' .* agent.expectedProbOpening(locationList(indexL),:);
+    consideredPortfolioSet = [consideredPortfolioSet ; portfolioSubSet];
+
+    %portfolioSubSet = portfolioSubSet .* agent.bList(utilityVariables.utilityForms)' .* agent.expectedProbOpening(locationList(indexL),:);
     portfolioSubSet(:,~any(portfolioSet,1))=[];
+    
     
     exceedsCreditLimit = false(size(portfolioSet,1),1);
     
@@ -380,13 +384,12 @@ for indexL = 1:length(locationList)
         
     end
     
-
     %exclude new portfolios that are out of reach due to credit limit
     portfolioValues(exceedsCreditLimit) = [];
     portfolioSet(exceedsCreditLimit,:) = [];
     portfolioAccessCodes(exceedsCreditLimit) = [];
     
-
+    
     if(~isempty(portfolioSet))
         agent.trapped = 0;
 
@@ -413,11 +416,15 @@ for indexL = 1:length(locationList)
             f=1;
         end
         locationValue(indexL) = -Inf;
+        
     end
 end
+agent.consideredPortfolios = consideredPortfolioSet;
 
-%now identify the best one.  
+
+%now identify the best one. 
 [~,indexSorted] = sort(locationValue,'descend');
+
 
 %randomize which of the best is chosen, in the case of a tie
 choice = indexSorted(1);
@@ -488,6 +495,7 @@ end
 agent.currentPortfolio = bestPortfolio;
 agent.currentAspiration = bestAspiration;
 agent.currentFidelity = bestFidelity;
+agent.training = agent.training | agent.currentPortfolio;
 
 end
 
