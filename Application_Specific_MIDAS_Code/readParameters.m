@@ -50,15 +50,24 @@ mapParameters.numDivisionMean = [2 8 9];
 mapParameters.numDivisionSD = [0 2 1];
 mapParameters.position = [300 100 600 600];
 mapParameters.r1 = []; %this will be the spatial reference if we are pulling from a shape file
-mapParameters.filePath = './Data/Senegal Boundary Files Admin 2/Admin_2_lat_lon.shp';
 mapParameters.saveDirectory = './Outputs/';
+
+mapParameters.filePath = './Data/Senegal Boundary Files Admin 2/Admin_2_lat_lon.shp';
 modelParameters.popFile = './Data/senegal_population_extract.xls';
 modelParameters.survivalFile = './Data/mortality_sen.xls';
 modelParameters.fertilityFile = './Data/fert_age_sen.xls';
+
+
+mapParameters.filePath = []; %'./Data/Senegal Boundary Files Admin 2/Admin_2_lat_lon.shp';
+modelParameters.popFile = []; %'./Data/senegal_population_extract.xls';
+modelParameters.survivalFile = []; %'./Data/mortality_sen.xls';
+modelParameters.fertilityFile = []; %'./Data/fert_age_sen.xls';
+
+
 modelParameters.agePreferencesFile = './Data/age_specific_params.xls';
 modelParameters.utilityDataPath = './Data';
 modelParameters.saveImg = true;
-modelParameters.shortName = 'Senegal_test';
+modelParameters.shortName = 'Random_map_test';
 agentParameters.currentID = 1;
 agentParameters.incomeShareFractionMean = 0.4;
 agentParameters.incomeShareFractionSD = 0;

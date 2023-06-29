@@ -103,8 +103,8 @@ if(~isempty(modelParameters.popFile))
 else
     locationLikelihood = ones(height(locations),1) / height(locations);
     locationLikelihood = cumsum(locationLikelihood);
-    agePointsPopulation = [50 100];
-    ageLikelihood = ones(height(locations),1) * [0.5 1];
+    agePointsPopulation = [0 50 100];
+    ageLikelihood = ones(height(locations),1) * [0 0.5 1];
     ageLikelihood(:,:,2) = ageLikelihood;
     genderLikelihood = rand(height(locations),1);
 end
@@ -121,7 +121,7 @@ if(~isempty(modelParameters.survivalFile))
     survivalRate = 1 - survivalRate;
 else
     agePointsSurvival = agePointsPopulation;
-    survivalRate = 1 - rand(height(locations),size(agePointsSurvival),2) / 200;  %this gives annual likelihood of death up to 2%
+    survivalRate = 1 - rand(height(locations),size(agePointsSurvival,2),2) / 200;  %this gives annual likelihood of death up to 2% for all ages, places, and genders
 end
 
 if(~isempty(modelParameters.fertilityFile))
@@ -135,8 +135,9 @@ if(~isempty(modelParameters.fertilityFile))
     fertilityRate = ones(height(locations),1) * (fertilityTable.Births)' / 1000; %this data is births per 1000 women
     fertilityRate = [zeros(height(locations),1) fertilityRate];
 else
-    agePointsFertility = [15 49];
+    agePointsFertility = [0 10 15 49 100];
     fertilityRate = rand(height(locations),size(agePointsFertility,2)) / 10;  %this gives annual likelihood of birth up to 10%
+    fertilityRate(:,[1 2 4 5]) = 0; 
 end
 
 %any additional age-specific factors ought to be handled here

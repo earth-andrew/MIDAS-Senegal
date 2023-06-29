@@ -85,7 +85,11 @@ for indexI = 1:modelParameters.numAgents
     
     %generate age, based on location and gender.  Extra 0 ensures bounding
     %below
-    age = interp1([0 ageLikelihood(locationID,:,gender)],[0 agePointsPopulation],rand());
+    if(agePointsPopulation(1) == 0) 
+        age = interp1([ageLikelihood(locationID,:,gender)],[agePointsPopulation],rand());
+    else
+        age = interp1([0 ageLikelihood(locationID,:,gender)],[0 agePointsPopulation],rand());
+    end
     
     %currentAgent = initializeAgent(agentParameters, utilityVariables, age, gender, locations(locationID,1).cityID, agentList(indexI));
     currentAgent = initializeAgent(agentParameters, utilityVariables, age, gender, locations(locationID,1).cityID);

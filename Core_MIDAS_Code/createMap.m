@@ -176,7 +176,7 @@ end
 [listX, listY] = ind2sub([sizeX sizeY],cityCenterLocations(:,2));
 
 %store locations in a dataset array
-locations = dataset({[cityCenterLocations listX listY adminUnits],'cityID','LocationIndex','locationX','locationY',layerNames{:}});
+locations = array2table([cityCenterLocations listX listY adminUnits],'VariableNames',{'cityID','LocationIndex','locationX','locationY',layerNames{:}});
 locations.matrixID = (1:length(listX))';
 end
 

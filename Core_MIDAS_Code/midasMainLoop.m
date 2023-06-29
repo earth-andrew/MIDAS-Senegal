@@ -365,7 +365,7 @@ for indexT = 1:modelParameters.timeSteps
     %%%%
     
     if(modelParameters.listTimeStepYN)
-        fprintf([runName ' - Time step ' num2str(indexT) ' of ' num2str(modelParameters.timeSteps) ' - ' num2str(migrations(indexT)) ' migrations.\n']);
+        fprintf([runName ' - Time step ' num2str(indexT) ' of ' num2str(modelParameters.timeSteps) ' - ' num2str(migrations(indexT)) ' migrations across ' num2str(numLivingAgents) ' total agents.\n']);
     end
 
     
