@@ -1,4 +1,4 @@
-function [ utilityLayerFunctions, utilityHistory, utilityAccessCosts, utilityTimeConstraints, utilityAccessCodesMat, utilityPrereqs, utilityBaseLayers, utilityForms, incomeForms, nExpected, hardSlotCountYN ] = createUtilityLayers(locations, modelParameters, demographicVariables )
+function [ utilityLayerFunctions, utilityHistory, utilityAccessCosts, utilityTimeConstraints, utilityDuration, utilityAccessCodesMat, utilityPrereqs, utilityBaseLayers, utilityForms, incomeForms, nExpected, hardSlotCountYN ] = createUtilityLayers(locations, modelParameters, demographicVariables )
 %createUtilityLayers defines the different income/utility layers (and the
 %functions that generate them)
 
@@ -33,11 +33,12 @@ function [ utilityLayerFunctions, utilityHistory, utilityAccessCosts, utilityTim
 
 mean_utility_by_layer = [10; ... %unskilled 1
     20; ... %unskilled 2
-    60; ... %skilled
+    100; ... %skilled
     10; ... %ag 1
     30; ... %ag 2
     0; ... %school
 ];
+
 
 %%%%%%%%%%%%%%%%%%%%%%%
 %%utilityLayerFunctions
@@ -53,7 +54,7 @@ mean_utility_by_layer = [10; ... %unskilled 1
 
 utilityLayerFunctions = [];
 for indexI = 1:(size(mean_utility_by_layer,1))  %16 (or 13) different sources, with 4 levels
-    utilityLayerFunctions{indexI,1} = @(k,m,nExpected,n_actual, base) base * (m * nExpected) / (max(0, n_actual - m * nExpected) * k + m * nExpected);   %some income layer - base layer input times density-dependent extinction
+    utilityLayerFunctions{indexI,1} = @(k,m,nExpected,n_actual, base) base * (m * nExpected) / (max(1, n_actual - m * nExpected) * k + m * nExpected);   %some income layer - base layer input times density-dependent extinction
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%
@@ -81,25 +82,46 @@ localOnly = [0; ... %unskilled 1
 timeQs =[0.5 0.5 0.5 0.5; ... %unskilled 1
     0.5 0.5 0.5 0.5; ... %unskilled 2
     0.75 0.75 0.75 0.75; ... %skilled
-    0 0.5 0.5 0; ... %ag 1
-    0 0.1 0.1 0; ... %ag 2
+    0.0 0.5 0.5 0; ... %ag 1 
+    0.0 0.1 0.1 0; ... %ag 2
     0.5 0.5 0.5 0.5; ... %school
 ];
 
 incomeQs =[1 1 1 1; ... %unskilled 1
     1 1 1 1; ... %unskilled 2
     1 1 1 1; ... %skilled
-    0 0 0 1; ... %ag 1
-    0 0 0 1; ... %ag 2
+    0 0 0 1; ... %ag 1 %Initial 0 0 0 1
+    0 0 0 1; ... %ag 2 %Initial 0 0 0 1
     0 0 0 0];  %school
+
+% N x 2 Matrix specifying the [minimum, maximum] number of cycles that each layer entails
+utilityDuration = [1 inf; %unskilled 1
+    2 inf; %unskilled 2
+    3 inf; %skilled
+    2 inf; %ag 1
+    4 inf; %ag 2
+    4 4; %school
+    ];
 
 quarterShare = incomeQs ./ (sum(incomeQs,2));
 quarterShare(isnan(quarterShare)) = 0;
 
 utilityBaseLayers = ones(size(locations,1),size(utilityLayerFunctions,1),timeSteps);
+
+%Adjustment factor for creating spatial variation
+epsilon = 0.0; %proportion of total income that may vary across regions
+climate_epsilon = 0.0; %proportion of total income that may vary across years
 for indexK = 1:size(locations,1)
     for indexI = 1:modelParameters.cycleLength:size(utilityBaseLayers,3)
-        utilityBaseLayers(indexK,:,indexI) = mean_utility_by_layer;
+        %utilityBaseLayers(indexK,:,indexI) = mean_utility_by_layer;
+        for indexJ = 1:size(mean_utility_by_layer,1)
+            if 3 < indexJ < 6
+                utilityBaseLayers(indexK,indexJ,indexI:indexI + modelParameters.cycleLength -1) = mean_utility_by_layer(indexJ,1) * (1 + epsilon * (-1 + 2 * rand(1))) * (1 + climate_epsilon * (-1 + 2 * rand(1)));
+            else
+                utilityBaseLayers(indexK,indexJ,indexI:indexI + modelParameters.cycleLength -1) = mean_utility_by_layer(indexJ,1);
+            end
+        end
+        
     end
 end
 
@@ -135,9 +157,9 @@ end
 %number of different utility layers, and k is the number of locations
 
 utilityAccessCosts = [ ...
-    1 1000; %cost of buying small farm
-    2 4000; %cost of growing to a large farm
-    3 5000; %cost of going to school
+    1 modelParameters.smallFarmCost; %cost of buying small farm %original 1000
+    2 modelParameters.largeFarmCost; %cost of growing to a large farm %original 4000
+    6 modelParameters.educationCost; %cost of going to school %original 5000
     ];
 
 utilityAccessCodesMat = zeros(size(utilityAccessCosts,1), size(mean_utility_by_layer,1), size(locations,1));
@@ -166,16 +188,16 @@ nExpected =  zeros(size(locations,1),size(mean_utility_by_layer,1));
 
 %let initial occupation be about 40% in unskilled 1, 15% in unskilled 2,
 %and 5% in skilled; 40% in ag 1, 20% in ag 2, and 10% in school.
-nExpected(:,1) = floor(numAgentsModel * 0.4);
-nExpected(:,2) = floor(numAgentsModel * 0.15);
+nExpected(:,1) = floor(numAgentsModel * 0.4); 
+nExpected(:,2) = floor(numAgentsModel * 0.15); 
 nExpected(:,3) = floor(numAgentsModel * 0.05);
 nExpected(:,4) = floor(numAgentsModel * 0.4);
 nExpected(:,5) = floor(numAgentsModel * 0.2);
 nExpected(:,6) = floor(numAgentsModel * 0.1);
 
 hardSlotCountYN = false(size(nExpected));
-hardSlotCountYN(:,3) = true;  %skilled labor opportunities represent fixed job opportunities
-hardSlotCountYN(:,6) = true;  %schools have fixed numbers of seats available
+hardSlotCountYN(:,3) = false;  %skilled labor opportunities represent fixed job opportunities
+hardSlotCountYN(:,6) = false;  %schools have fixed numbers of seats available
 
 %utility layers may be income, use value, etc.  identify what form of
 %utility it is, so that they get added and weighted appropriately in
@@ -224,6 +246,7 @@ utilityPrereqs(5, 4) = 1; %ag 2 requires ag 1
 utilityPrereqs(3, 6) = 1; %skilled labor requires school
 
 
+
 %each layer 'requires' itself
 utilityPrereqs = utilityPrereqs + eye(size(utilityTimeConstraints,1));
 utilityPrereqs = sparse(utilityPrereqs);
@@ -242,6 +265,9 @@ for indexI = 1:size(nExpected,2)
    tempExpected(:,indexI) = sum(nExpected(:,utilityPrereqs(:,indexI) > 0),2); 
 end
 nExpected = tempExpected;
+
+
+
 
 %%% OTHER EXAMPLE CODE BELOW HERE
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

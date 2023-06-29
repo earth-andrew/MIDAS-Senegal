@@ -9,8 +9,8 @@ addpath('./Override_Core_MIDAS_Code');
 
 rng('default');
 
-runName = 'Whatever you want to call this one';
-series = 'MC_Run_';
+runName = 'FarmSeasonality';
+series = 'Aspirations_UnitTest_AllPrereqs_BackCast_freeEducation';
 saveDirectory = './Outputs/';
 
 input = [];

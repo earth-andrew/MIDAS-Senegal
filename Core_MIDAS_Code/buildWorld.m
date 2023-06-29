@@ -1,6 +1,6 @@
 function [agentList, aliveList, modelParameters, agentParameters, mapParameters, utilityVariables, mapVariables, demographicVariables] = buildWorld(modelParameters, mapParameters, agentParameters, networkParameters)
-%create a map based on the defined administrative structure in
-%mapParameters
+
+%create a map based on the defined administrative structure in mapParameters
 if(isempty(mapParameters.filePath))
     [locations, map, borders] = createMap( modelParameters, mapParameters);
 else
@@ -37,12 +37,12 @@ demographicVariables.ageDiscountRateFactor = ageDiscountRateFactor;
 %they experienced or learned.  This structure allows an arbitrarily large
 %landscape with an arbitrarily large number of agents, without wasting
 %memory
-[utilityLayerFunctions, utilityHistory, utilityAccessCosts, utilityTimeConstraints, utilityAccessCodesMat, utilityPrereqs, utilityBaseLayers, utilityForms, incomeForms, nExpected, hardSlotCountYN] = createUtilityLayers(locations, modelParameters, demographicVariables);
-
+[utilityLayerFunctions, utilityHistory, utilityAccessCosts, utilityTimeConstraints, utilityDuration, utilityAccessCodesMat, utilityPrereqs, utilityBaseLayers, utilityForms, incomeForms, nExpected, hardSlotCountYN] = createUtilityLayers(locations, modelParameters, demographicVariables);
 utilityVariables.numForms = max(utilityForms);
 utilityVariables.utilityLayerFunctions = utilityLayerFunctions;
 utilityVariables.utilityHistory = utilityHistory;
 utilityVariables.utilityAccessCosts = utilityAccessCosts;
+utilityVariables.utilityDuration = utilityDuration;
 utilityVariables.utilityTimeConstraints = utilityTimeConstraints;
 utilityVariables.utilityAccessCodesMat = utilityAccessCodesMat;
 utilityVariables.utilityBaseLayers = utilityBaseLayers;
@@ -67,11 +67,11 @@ agentParameters.init_incomeLayersHistory = incomeLayersHistory;
 agentParameters.init_expectedProbOpening = expectedProbOpening;
 
 %make the list all at once
-agentList = repmat(initializeAgent(agentParameters, utilityVariables, 1, 1, 1),1, networkParameters.agentPreAllocation);
+agentList = repmat(initializeAgent(agentParameters, utilityVariables, modelParameters, 1, 1, 1),1, networkParameters.agentPreAllocation);
 
 %make each element a pointer to a different placeholder object
 for indexI = 1:networkParameters.agentPreAllocation
-   agentList(indexI) =  initializeAgent(agentParameters, utilityVariables, 1, 1, 1);
+   agentList(indexI) =  initializeAgent(agentParameters, utilityVariables, modelParameters, 1, 1, 1);
 end
 %create agents, assigning agent-specific properties as appropriate from
 %input data
@@ -91,13 +91,14 @@ for indexI = 1:modelParameters.numAgents
         age = interp1([0 ageLikelihood(locationID,:,gender)],[0 agePointsPopulation],rand());
     end
     
-    %currentAgent = initializeAgent(agentParameters, utilityVariables, age, gender, locations(locationID,1).cityID, agentList(indexI));
-    currentAgent = initializeAgent(agentParameters, utilityVariables, age, gender, locations(locationID,1).cityID);
+    %currentAgent = initializeAgent(agentParameters, utilityVariables, modelParameters, age, gender, locations(locationID,1).cityID, agentList(indexI));
+    currentAgent = initializeAgent(agentParameters, utilityVariables, modelParameters, age, gender, locations(locationID,1).cityID);
     currentAgent.matrixLocation = locations(locationID,:).matrixID;
     currentAgent.moveHistory = [0 currentAgent.matrixLocation];
+    currentAgent.consideredHistory = cell(modelParameters.timeSteps, 1);
     currentAgent.DOB = 0;
     currentAgent.id = agentParameters.currentID;
-    agentParameters.currentID = indexI + 1;     
+    agentParameters.currentID = indexI + 1;    
     agentList(indexI) = currentAgent;
 end
 
@@ -135,6 +136,14 @@ end
 
 %Assign initial income portfolios to agents
 [ agentList ] = assignInitialLayers( agentList, utilityVariables );
+
+for indexA = 1:height(agentList)
+    currentAgent = agentList(indexA);
+    for indexT = 1:modelParameters.spinupTime
+        currentAgent.consideredHistory{indexT} = currentAgent.currentPortfolio;
+    end
+end
+
 
 %construct a network among agents according to parameters specified in
 %networkParameters.  Any change in network structure should modify/replace

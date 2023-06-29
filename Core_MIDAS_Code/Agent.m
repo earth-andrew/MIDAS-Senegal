@@ -20,9 +20,14 @@ classdef Agent < handle
        myIndexInNetwork
        accessCodesPaid
        bestPortfolios
+       bestAspirations
+       consideredPortfolios
+       consideredHistory
+       bestFidelity
        bestPortfolioValues
        knowsIncomeLocation
        incomeLayersHistory
+       training
        scratch;
        overlap
        heardOpening
@@ -30,6 +35,8 @@ classdef Agent < handle
        timeProbOpeningUpdated
        %incomeLayersTest
        currentPortfolio
+       currentAspiration
+       currentFidelity
        firstPortfolio
        personalIncomeHistory
        currentSharedIn
@@ -44,6 +51,7 @@ classdef Agent < handle
        pMeetNew
        pAddFitElement
        pChoose
+       pBackCast
        fDecay
        pGetLayer_informed
        pGetLayer_uninformed

@@ -26,6 +26,7 @@ inMigrations = zeros(numLocations, modelParameters.timeSteps);
 migrationMatrix = zeros(numLocations,numLocations,modelParameters.timeSteps);
 portfolioHistory = cell(numLocations, modelParameters.timeSteps);
 trappedHistory = zeros(length(agentList),modelParameters.timeSteps);
+aspirationHistory = zeros(numLayers, modelParameters.timeSteps);
 
 %create a list of shared layers, for use in choosing new link
 agentLayers = zeros(length(agentList),size(utilityVariables.utilityLayerFunctions,1));
@@ -43,6 +44,9 @@ for indexT = 1:modelParameters.timeSteps
         
     livingAgents = agentList(aliveList);
     currentRandOrder = randperm(length(livingAgents));
+
+    %Update average utilities for aspirational portfolios
+    utilityVariables.aspirations = aspirationalPortfolio(utilityVariables.utilityBaseLayers(:,:,indexT), modelParameters.samplePortfolios, utilityVariables.utilityPrereqs, utilityVariables.utilityTimeConstraints);
 
     %update agent age, information and preferences, looping across agents
     for indexA = 1:length(currentRandOrder)
@@ -213,23 +217,24 @@ for indexT = 1:modelParameters.timeSteps
         end
         clear temp;
         
-
         %draw number to see if agent updates preferences on where to
         %be/what to do
         if(rand() < currentAgent.pChoose && indexT > modelParameters.spinupTime && currentAgent.age >= modelParameters.ageDecision)
             [currentAgent, moved] = choosePortfolio(currentAgent, utilityVariables, indexT, modelParameters, mapParameters, demographicVariables, mapVariables);
-            
-            
+            aspirationHistory(:,indexT) = aspirationHistory(:,indexT) + currentAgent.currentAspiration';
+            currentAgent.consideredHistory{indexT} = currentAgent.consideredPortfolios;
             if(~isempty(moved))
                 migrations(indexT) = migrations(indexT) + 1;
                 inMigrations(moved(2), indexT) = inMigrations(moved(2), indexT) + 1;
                 outMigrations(moved(1), indexT) = outMigrations(moved(1), indexT) + 1;
                 migrationMatrix(moved(1),moved(2),indexT) = migrationMatrix(moved(1),moved(2),indexT) + 1;
                 currentAgent.moveHistory = [currentAgent.moveHistory; indexT currentAgent.matrixLocation currentAgent.visX currentAgent.visY];
+                
             end
             
             %update these line in the arrays used to choose new links
             agentLayers(currentAgent.id,:) = currentAgent.currentPortfolio;
+            
             agentLocations(currentAgent.id) = currentAgent.matrixLocation;
         end
        
@@ -270,7 +275,7 @@ for indexT = 1:modelParameters.timeSteps
             
             %find out how much the current agent made, from each layer, and
             %update their knowledge
-
+            
             newIncome = sum(utilityVariables.utilityHistory(currentAgent.matrixLocation,currentAgent.currentPortfolio(utilityVariables.incomeForms(currentAgent.currentPortfolio)), indexT));
 
             
@@ -331,6 +336,7 @@ for indexT = 1:modelParameters.timeSteps
 
     %update our time path of trapped agents
     trappedHistory([agentList(:).trapped] > 0,indexT) = 1;
+    %Count number of agents with aspiration for each layer in time T
    
     if (modelParameters.visualizeYN & mod(indexT, modelParameters.visualizeInterval) == 0)
         
@@ -387,6 +393,7 @@ outputs.averageExpectedOpening = averageExpectedOpening;
 outputs.utilityHistory = utilityVariables.utilityHistory;
 outputs.portfolioHistory = portfolioHistory;
 outputs.trappedHistory = trappedHistory;
+outputs.aspirationHistory = aspirationHistory;
 
 agentList = agentList(1:agentParameters.currentID-1);
 agentSummary = table([agentList(:).id]','VariableNames',{'id'});
@@ -415,9 +422,13 @@ tempFirstPortfolio = cell(length(agentList),1);
 tempNetwork = cell(length(agentList),1);
 tempMove = cell(length(agentList),1);
 tempAccess = cell(length(agentList),1);
+tempConsideredHistory = cell(length(agentList),1);
+tempTraining = cell(length(agentList),1);
 for indexI = 1:length(agentList)
     tempCurrentPortfolio{indexI} = agentList(indexI).currentPortfolio;
     tempFirstPortfolio{indexI} = agentList(indexI).firstPortfolio;
+    tempConsideredHistory{indexI} = agentList(indexI).consideredHistory;
+    tempTraining{indexI} = agentList(indexI).training;
     try
     tempNetwork{indexI} = [agentList(indexI).network(:).id];
     catch
@@ -428,9 +439,11 @@ for indexI = 1:length(agentList)
 end
 agentSummary.currentPortfolio = tempCurrentPortfolio;
 agentSummary.firstPortfolio = tempFirstPortfolio;
+agentSummary.consideredHistory = tempConsideredHistory;
 agentSummary.network = tempNetwork;
 agentSummary.moveHistory = tempMove;
 agentSummary.accessCodes = tempAccess;
+agentSummary.training = tempTraining;
 
 outputs.agentSummary = agentSummary;
 

@@ -95,9 +95,15 @@ riskCoeff = 1 - agent.rValue;
 %location
 locationValue = NaN*ones(length(locationList),1);
 locationPortfolio = cell(length(locationList),1);
+locationAspiration = cell(length(locationList),1);
+locationFidelity = cell(length(locationList),1);
 locationAccessCodes = cell(length(locationList),1);
 locationMovingCosts = zeros(length(locationList),1);
+consideredPortfolioSet = []; %List of portfolios considered by agent across all locations in this time step
 
+%Check which layers are "selectable" based on agent prereqs
+%NOTE - agent training needs to be changed to accesscodespaid
+selectable = selectableFlag(utilityVariables.utilityPrereqs, utilityVariables.utilityAccessCodesMat, utilityVariables.utilityAccessCosts, agent.training, agent.wealth, currentT);
 
 %for each location, find a good income portfolio - the current portfolio
 %(if this is home city), some other good portfolios from past searches, and
@@ -108,6 +114,8 @@ for indexL = 1:length(locationList)
     %active in each portfolio, and the moving cost that will apply to every
     %portfolio in this location
     portfolioSet = (false(totalNumPortfolios,size(utilityVariables.utilityHistory,2))); %rows equal to number of portfolios; columns equal to number of layers
+    aspirationSet = (false(totalNumPortfolios,size(utilityVariables.utilityHistory,2))); %Generate equivalent matrix to keep track of aspirations associated with each portfolio
+    fidelitySet = (zeros(totalNumPortfolios)); %Length of high-fidelity portion for each portfolio  
     currentPortfolio = 1;
     currentMovingCost = mapVariables.movingCosts(currentLocation, locationList(indexL));
     locationMovingCosts(indexL) = currentMovingCost;
@@ -115,23 +123,31 @@ for indexL = 1:length(locationList)
     %first portfolio is the current portfolio if this is the home city
     if(locationList(indexL) == agent.matrixLocation) %currentLocation
         portfolioSet(currentPortfolio,agent.currentPortfolio) = true;
+        aspirationSet(currentPortfolio,agent.currentAspiration) = true;
+        fidelitySet(currentPortfolio) = agent.currentFidelity;
         currentPortfolio = currentPortfolio + 1;
     end
     
     %next add any previous 'best' portfolios
     for indexP = 1:agent.numBestPortfolio %other best portfolios in this location
         nextBest = agent.bestPortfolios{locationList(indexL), indexP};
+        nextBestAspiration = agent.bestAspirations{locationList(indexL),indexP};
+        nextBestFidelity = agent.bestFidelity{locationList(indexL),indexP};
         if(~isempty(nextBest))
             portfolioSet(currentPortfolio, nextBest) = true;
+            aspirationSet(currentPortfolio,nextBestAspiration) = true;
+            fidelitySet(currentPortfolio) = nextBestFidelity;
             currentPortfolio = currentPortfolio + 1;
         end
     end
     
     %last, come up with a few random portfolios to finish
     for indexP = currentPortfolio:totalNumPortfolios
-        nextRandom = createPortfolio(find(any(agent.knowsIncomeLocation(locationList(indexL),:),1)),utilityVariables.utilityTimeConstraints, utilityVariables.utilityPrereqs, agent.pAddFitElement);
+        [nextRandom,nextAspiration,nextFidelity] = createPortfolio([], find(any(agent.knowsIncomeLocation(locationList(indexL),:),1)),utilityVariables.utilityTimeConstraints, utilityVariables.utilityPrereqs, agent.pAddFitElement,  utilityVariables.utilityAccessCodesMat, utilityVariables.utilityAccessCosts, utilityVariables.utilityDuration, agent.numPeriodsEvaluate, selectable, utilityVariables.utilityHistory(indexL,:,currentT-1), agent.wealth, agent.pBackCast);
         if(~isempty(nextRandom))
             portfolioSet(currentPortfolio, nextRandom) = true;
+            aspirationSet(currentPortfolio,nextAspiration) = true;
+            fidelitySet(currentPortfolio) = nextFidelity;
             currentPortfolio = currentPortfolio + 1;
         end
     end
@@ -146,7 +162,8 @@ for indexL = 1:length(locationList)
     binaryPortfolio = bi2de(portfolioSet);
     [bSort,iSort] = sort(binaryPortfolio);
     portfolioSet = portfolioSet(iSort([true; diff(bSort)>0]),:);
-       
+    aspirationSet = aspirationSet(iSort([true; diff(bSort)>0]),:);%CHECK IF THIS IS CONSISTENT WAY TO SORT ASPIRATION SET
+    fidelitySet = fidelitySet(iSort([true; diff(bSort)>0]));
     %identify which layers are used across any of the portfolios being
     %evaluated (so we can ignore the rest)
     usedIncomeLayers = any(portfolioSet,1);
@@ -166,7 +183,7 @@ for indexL = 1:length(locationList)
     %make a blank array to hold the estimated time paths for each layer,
     %and reshape our fullHistory array to be the same 2D shape
     numUniqueLayers = size(availableHistory,2);
-    portfolioData = NaN * ones(numUniqueLayers,agent.numPeriodsEvaluate);
+    portfolioData = NaN * ones(numUniqueLayers,agent.numPeriodsEvaluate); %Need to adjust to portfolios of different lengths?
     fullHistory = reshape(fullHistory,numUniqueLayers,currentT);
     
     %our evaluation period starts in the next timestep, so find points in
@@ -280,18 +297,25 @@ for indexL = 1:length(locationList)
     %only layers in use; portfolioSet is sized to include ALL layers, so we
     %make a subset, and then apply any weightings, including UTILITY
     %WEIGHTS and EXPECTATIONS OF GETTING ACCESS
-    
     portfolioSubSet = portfolioSet;
-    portfolioSubSet = portfolioSubSet .* agent.bList(utilityVariables.utilityForms)' .* agent.expectedProbOpening(locationList(indexL),:);
+    consideredPortfolioSet = [consideredPortfolioSet ; portfolioSubSet];
+
+    %portfolioSubSet = portfolioSubSet .* agent.bList(utilityVariables.utilityForms)' .* agent.expectedProbOpening(locationList(indexL),:);
     portfolioSubSet(:,~any(portfolioSet,1))=[];
+    
     
     exceedsCreditLimit = false(size(portfolioSet,1),1);
     
     for indexP = 1:numPortfolios
-        
+        %Test data
+        %fidelity = 4; %Test data for high-fidelity length - to replace with actual lengths
+
         %dump all layers into a single time series with each element being
-        %the sum of expected layer income in each period.  
-        currentPortfolio = (portfolioSubSet(indexP,:)  * portfolioData);
+        %the sum of expected layer income in each period. 
+        currentPortfolio = portfolioSubSet(indexP,:)  * portfolioData(:,1:fidelitySet(indexP));
+        currentAspiration = aspirationSet(indexP,:) * utilityVariables.aspirations .* ones(1,agent.numPeriodsEvaluate - fidelitySet(indexP)); %Aspirations expressed as logical values .* avg utility for each aspirational layer .* vector of ones to make up for remaining time periods
+        %Add in incomes from aspirational portfolio and concatenate
+        currentPortfolio = [currentPortfolio currentAspiration];
 
         %add sharing in from the network
         if(~isempty(agent.network))
@@ -360,14 +384,15 @@ for indexL = 1:length(locationList)
         
     end
     
-
     %exclude new portfolios that are out of reach due to credit limit
     portfolioValues(exceedsCreditLimit) = [];
     portfolioSet(exceedsCreditLimit,:) = [];
     portfolioAccessCodes(exceedsCreditLimit) = [];
     
+    
     if(~isempty(portfolioSet))
         agent.trapped = 0;
+
         %sort them
         [sortedValues,indexSorted] = sort(portfolioValues,'descend');
         
@@ -375,11 +400,15 @@ for indexL = 1:length(locationList)
         %save the top few to the 'best portfolio' list
         for indexB = 1:min(agent.numBestPortfolio,length(indexSorted))
             agent.bestPortfolios{locationList(indexL), indexB} = portfolioSet(indexSorted(indexB),:);
+            agent.bestAspirations{locationList(indexL), indexB} = aspirationSet(indexSorted(indexB),:);
+            agent.bestFidelity{locationList(indexL), indexB} = fidelitySet(indexSorted(indexB));
         end
         
         %save the best for current evaluation
         locationValue(indexL) = sortedValues(1);
         locationPortfolio{indexL} = portfolioSet(indexSorted(1),:);
+        locationAspiration{indexL} = aspirationSet(indexSorted(1),:);
+        locationFidelity{indexL} = fidelitySet(indexSorted(1));
         locationAccessCodes{indexL} = portfolioAccessCodes{indexSorted(1)};
     else
         agent.trapped = 1;
@@ -387,11 +416,15 @@ for indexL = 1:length(locationList)
             f=1;
         end
         locationValue(indexL) = -Inf;
+        
     end
 end
+agent.consideredPortfolios = consideredPortfolioSet;
 
-%now identify the best one.  
+
+%now identify the best one. 
 [~,indexSorted] = sort(locationValue,'descend');
+
 
 %randomize which of the best is chosen, in the case of a tie
 choice = indexSorted(1);
@@ -404,6 +437,9 @@ end
 
 bestLocation = locationList(choice);
 bestPortfolio = locationPortfolio{choice};
+bestAspiration = locationAspiration{choice};
+bestFidelity = locationFidelity{choice};
+
 
 
 %if the best portfolio isn't where we currently are, we have to move
@@ -457,6 +493,9 @@ catch
 end
 
 agent.currentPortfolio = bestPortfolio;
+agent.currentAspiration = bestAspiration;
+agent.currentFidelity = bestFidelity;
+agent.training = agent.training | agent.currentPortfolio;
 
 end
 
