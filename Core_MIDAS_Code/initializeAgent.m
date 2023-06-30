@@ -34,7 +34,11 @@ bList = max(0, agentParameters.bListMean + randn(utilityVariables.numForms,1) * 
 if(~isempty(varargin))
     newAgent = varargin{1};
 else
+    try
     newAgent = Agent(Inf, location);
+    catch
+        f=1;
+    end
 end
 
 
