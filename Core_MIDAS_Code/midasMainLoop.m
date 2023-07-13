@@ -94,6 +94,7 @@ for indexT = 1:modelParameters.timeSteps
             if(agentGivesBirth)
                 gender = 2 - (rand() > 0.5);  %let it be equally likely to be 1 or 2
                 age = 0;
+                
                 %newBaby = initializeAgent(agentParameters, utilityVariables, age, gender, currentAgent.location, agentList(agentParameters.currentID));
                 newBaby = initializeAgent(agentParameters, utilityVariables, modelParameters, age, gender, currentAgent.location);
                 newBaby.id = agentParameters.currentID;
@@ -111,7 +112,7 @@ for indexT = 1:modelParameters.timeSteps
                 currentAgent.myIndexInNetwork(end+1) = 1;
                 currentAgent.lastIntendedShareIn(end+1) = 0;
                 
-                newBaby = assignInitialLayers(newBaby, utilityVariables);
+                newBaby = assignInitialLayers(newBaby, utilityVariables, indexT);
                 
                 mapVariables.network(newBaby.id, currentAgent.id) = 1;
                 mapVariables.network(currentAgent.id, newBaby.id) = 1;
@@ -216,11 +217,12 @@ for indexT = 1:modelParameters.timeSteps
             currentAgent.timeProbOpeningUpdated(temp) = indexT;
         end
         clear temp;
-        
+       
         %draw number to see if agent updates preferences on where to
         %be/what to do
         if(rand() < currentAgent.pChoose && indexT > modelParameters.spinupTime && currentAgent.age >= modelParameters.ageDecision)
             [currentAgent, moved] = choosePortfolio(currentAgent, utilityVariables, indexT, modelParameters, mapParameters, demographicVariables, mapVariables);
+            currentAgent.agentPortfolioHistory{indexT} = currentAgent.currentPortfolio;
             aspirationHistory(:,indexT) = aspirationHistory(:,indexT) + currentAgent.currentAspiration';
             currentAgent.consideredHistory{indexT} = currentAgent.consideredPortfolios;
             if(~isempty(moved))

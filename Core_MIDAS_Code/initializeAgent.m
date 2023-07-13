@@ -27,7 +27,6 @@ pGetLayer_informed = min(1,max(0,agentParameters.informedExpectedProbJoinLayerMe
 pGetLayer_uninformed = min(1,max(0,agentParameters.uninformedMaxExpectedProbJoinLayerMean + randn() * agentParameters.uninformedMaxExpectedProbJoinLayerSD));
 fDecay = min(1,max(0,agentParameters.expectationDecayMean + randn() * agentParameters.expectationDecaySD));
 
-
 %bList has elements corresponding to each kind of utility layer present
 bList = max(0, agentParameters.bListMean + randn(utilityVariables.numForms,1) * agentParameters.bListSD);
 
@@ -64,8 +63,10 @@ newAgent.bestAspirations = cell(size(utilityVariables.utilityHistory,1), numBest
 newAgent.bestFidelity = cell(size(utilityVariables.utilityHistory,1), numBestFidelity);
 newAgent.bestPortfolioValues = zeros(size(utilityVariables.utilityHistory,1),numBestPortfolio);
 newAgent.consideredPortfolios = [];
-newAgent.training = [];
+newAgent.training = false(size(utilityVariables.utilityLayerFunctions,1),1);
+newAgent.experience = zeros(size(utilityVariables.utilityLayerFunctions,1),1);
 newAgent.consideredHistory = cell(size(modelParameters.timeSteps,1));
+newAgent.agentPortfolioHistory = cell(size(modelParameters.timeSteps,1));
 newAgent.pInteract = pInteract;
 newAgent.pMeetNew = pMeetNew;
 newAgent.pAddFitElement = pAddFitElement;

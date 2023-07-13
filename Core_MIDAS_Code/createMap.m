@@ -50,7 +50,7 @@ layerNames = {};
 divisionCount = 0;
 
 %for each administrative scale
-for indexI = 2:(length(mapParameters.numDivisionMean)+1)
+for indexI = 2:(length(mapParameters.numDivisionMean) + 1)
 
     %find out how many distinct units there were at the higher level
     listLastUnits = unique(map(:,:,indexI-1));
@@ -61,15 +61,15 @@ for indexI = 2:(length(mapParameters.numDivisionMean)+1)
     
     %for each unit in the admin layer above
     for indexJ = 1:length(listLastUnits)
-        
         %identify the area of the current unit as 0s
         tempMap = zeros(sizeX, sizeY);
         tempMap(map(:,:,indexI-1) ~= listLastUnits(indexJ)) = -1;
         openList = find(tempMap == 0);
         
         %calculate the number of units to subdivide this area into
-        numCurrentUnits = min(length(openList),max(1, round(mapParameters.numDivisionMean(indexI-1) + randn() * mapParameters.numDivisionSD(indexI-1))));
-        
+        s = randn(100,1);
+        regions = s(3);
+        numCurrentUnits = min(length(openList),max(1, round(mapParameters.numDivisionMean(indexI-1) + regions * mapParameters.numDivisionSD(indexI-1))));
         %randomly pick center points for each of these new units within the
         %current area
         currentLocations = openList(randperm(length(openList), numCurrentUnits));

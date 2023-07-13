@@ -95,12 +95,12 @@ incomeQs =[1 1 1 1; ... %unskilled 1
     0 0 0 0];  %school
 
 % N x 2 Matrix specifying the [minimum, maximum] number of cycles that each layer entails
-utilityDuration = [1 inf; %unskilled 1
-    2 inf; %unskilled 2
-    3 inf; %skilled
-    2 inf; %ag 1
-    4 inf; %ag 2
-    4 4; %school
+utilityDuration = [4 inf; %unskilled 1
+    8 inf; %unskilled 2
+    12 inf; %skilled
+    8 inf; %ag 1
+    16 inf; %ag 2
+    16 16; %school
     ];
 
 quarterShare = incomeQs ./ (sum(incomeQs,2));

@@ -1,10 +1,10 @@
 load Aspirations_UnitTest_AllPrereqs_10PeriodEvaluate0_14-May-2023_00-05-52.mat
 shortterm = output;
 
-load Aspirations_UnitTest_AllPrereqs_BackCast_freeEducation0_14-May-2023_12-36-53.mat
+load Aspirations_UnitTest_AllPrereqs_BackCast_freeEducation0_30-Jun-2023_16-18-09.mat
 backcast = output;
 
-load Aspirations_UnitTest_AllPrereqs_Forecast0_13-May-2023_21-08-03.mat
+load Aspirations_UnitTest_AllPrereqs_ForeCast_freeEducation0_13-Jul-2023_17-11-10.mat
 forecast = output;
 
 scenariolist = [shortterm, forecast, backcast];
@@ -56,7 +56,7 @@ ylabel('Proportion of Agents','FontSize',16)
 xlabel('Income Layers', 'FontSize',16)
 legend({'No Aspirations', 'Forecast', 'BackCast'},'FontSize',14)
 %% Line Plot of job distributions over time
-indexL = 3; %Layer of Comparison
+indexL = 6; %Layer of Comparison
 categories = {'Unskilled 1', 'Unskilled 2', 'Skilled', 'Ag1', 'Ag2', 'School'};
 plot(time,squeeze(jobs(1,indexL,:)),'LineWidth',3)
 hold on
@@ -158,7 +158,7 @@ ylabel('Proportion Agents with Unmet Aspirations' ,'FontSize',16)
 legend({'Short Time Horizon (4 yrs)', 'Forecast', 'BackCast'},'FontSize',14)
 
 %% Aspirations by Time
-indexA = 5; %Income Layer for Focal Aspiration
+indexA = 6; %Income Layer for Focal Aspiration
 time = 1:steps;
 plot(time, scenariolist(1).aspirationHistory(indexA,:),'LineWidth',3)
 hold on
@@ -236,7 +236,7 @@ sizeOne = zeros(jobcats,1);
 sizeTwo = zeros(jobcats,1);
 
 for indexL = 1:numLocations
-    tempPortfolios = scenariolist(1).portfolioHistory{indexL,focalTime};
+    tempPortfolios = scenariolist(3).portfolioHistory{indexL,focalTime};
     communityPortfolios = [communityPortfolios; tempPortfolios'];
 end
 

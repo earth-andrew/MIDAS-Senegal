@@ -28,6 +28,7 @@ classdef Agent < handle
        knowsIncomeLocation
        incomeLayersHistory
        training
+       experience
        scratch;
        overlap
        heardOpening
@@ -38,6 +39,7 @@ classdef Agent < handle
        currentAspiration
        currentFidelity
        firstPortfolio
+       agentPortfolioHistory
        personalIncomeHistory
        currentSharedIn
        lastIntendedShareIn

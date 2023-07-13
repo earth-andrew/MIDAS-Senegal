@@ -102,8 +102,8 @@ locationMovingCosts = zeros(length(locationList),1);
 consideredPortfolioSet = []; %List of portfolios considered by agent across all locations in this time step
 
 %Check which layers are "selectable" based on agent prereqs
-%NOTE - agent training needs to be changed to accesscodespaid
-selectable = selectableFlag(utilityVariables.utilityPrereqs, utilityVariables.utilityAccessCodesMat, utilityVariables.utilityAccessCosts, agent.training, agent.wealth, currentT);
+
+selectable = selectableFlag(utilityVariables.utilityPrereqs, utilityVariables.utilityAccessCodesMat, utilityVariables.utilityAccessCosts, agent.training, agent.experience, agent.currentPortfolio, utilityVariables.utilityDuration(:,2));
 
 %for each location, find a good income portfolio - the current portfolio
 %(if this is home city), some other good portfolios from past searches, and
@@ -130,6 +130,7 @@ for indexL = 1:length(locationList)
     
     %next add any previous 'best' portfolios
     for indexP = 1:agent.numBestPortfolio %other best portfolios in this location
+       
         nextBest = agent.bestPortfolios{locationList(indexL), indexP};
         nextBestAspiration = agent.bestAspirations{locationList(indexL),indexP};
         nextBestFidelity = agent.bestFidelity{locationList(indexL),indexP};
@@ -139,11 +140,26 @@ for indexL = 1:length(locationList)
             fidelitySet(currentPortfolio) = nextBestFidelity;
             currentPortfolio = currentPortfolio + 1;
         end
+        
     end
     
+    %portfoliosRemoved = 0;
+    %removeIndex = [];
+    %for indexP = 1:(currentPortfolio-1)
+        %Remove any existing portfolios that are no longer selectable
+        %if any((portfolioSet(indexP,:) - selectable') > 0)
+            %removeIndex = [removeIndex indexP];
+            %portfoliosRemoved = portfoliosRemoved + 1;
+        %end
+    %end
+    
+    %portfolioSet(removeIndex,:) = [];
+    %aspirationSet(removeIndex,:) = [];
+    %fidelitySet(removeIndex,:) = [];
+    %currentPortfolio = currentPortfolio - portfoliosRemoved;
     %last, come up with a few random portfolios to finish
-    for indexP = currentPortfolio:totalNumPortfolios
-        [nextRandom,nextAspiration,nextFidelity] = createPortfolio([], find(any(agent.knowsIncomeLocation(locationList(indexL),:),1)),utilityVariables.utilityTimeConstraints, utilityVariables.utilityPrereqs, agent.pAddFitElement,  utilityVariables.utilityAccessCodesMat, utilityVariables.utilityAccessCosts, utilityVariables.utilityDuration, agent.numPeriodsEvaluate, selectable, utilityVariables.utilityHistory(indexL,:,currentT-1), agent.wealth, agent.pBackCast);
+    for indexP = (currentPortfolio):totalNumPortfolios
+        [nextRandom,nextAspiration,nextFidelity] = createPortfolio([], find(any(agent.knowsIncomeLocation(locationList(indexL),:),1)),utilityVariables.utilityTimeConstraints, utilityVariables.utilityPrereqs, agent.pAddFitElement, agent.training, agent.experience, utilityVariables.utilityAccessCosts, utilityVariables.utilityDuration, agent.numPeriodsEvaluate, selectable, utilityVariables.utilityHistory(indexL,:,currentT-1), agent.wealth, agent.pBackCast);
         if(~isempty(nextRandom))
             portfolioSet(currentPortfolio, nextRandom) = true;
             aspirationSet(currentPortfolio,nextAspiration) = true;
@@ -308,7 +324,6 @@ for indexL = 1:length(locationList)
     
     for indexP = 1:numPortfolios
         %Test data
-        %fidelity = 4; %Test data for high-fidelity length - to replace with actual lengths
 
         %dump all layers into a single time series with each element being
         %the sum of expected layer income in each period. 
@@ -495,7 +510,10 @@ end
 agent.currentPortfolio = bestPortfolio;
 agent.currentAspiration = bestAspiration;
 agent.currentFidelity = bestFidelity;
-agent.training = agent.training | agent.currentPortfolio;
+
+%Update agent pre-requisites, with special function for education (to
+%account for minimum number of years needed)
+agent = trainingTracker(agent, utilityVariables.utilityDuration);
 
 end
 

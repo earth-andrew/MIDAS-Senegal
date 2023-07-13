@@ -14,7 +14,7 @@ series = 'MC_Run_';
 saveDirectory = './Outputs/';
 
 %number of runs
-modelRuns = 10;
+modelRuns = 3;
 
 try load updatedMCParams
 catch

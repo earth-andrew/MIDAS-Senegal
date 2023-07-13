@@ -135,12 +135,13 @@ for indexI = 1:size(locations,1)
 end
 
 %Assign initial income portfolios to agents
-[ agentList ] = assignInitialLayers( agentList, utilityVariables );
+[ agentList ] = assignInitialLayers( agentList, utilityVariables,modelParameters.spinupTime );
 
 for indexA = 1:height(agentList)
     currentAgent = agentList(indexA);
     for indexT = 1:modelParameters.spinupTime
         currentAgent.consideredHistory{indexT} = currentAgent.currentPortfolio;
+        currentAgent.agentPortfolioHistory{indexT} = currentAgent.currentPortfolio;
     end
 end
 
