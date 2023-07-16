@@ -40,7 +40,9 @@ function [portfolio, aspiration, highfidelityDuration] = createPortfolio(portfol
 
 
 %To-DO:
-%1) Figure out how to add an intermediate portfolio
+%1) Figure out whether to account for income constraints in both
+%backcasting and forecasting
+%2) Figure out how to add an intermediate portfolio
 
 %start with all the time in the world
 timeRemaining = ones(1, size(constraints,2)-1);  %will be as long as the cycle defined for layers
@@ -60,7 +62,7 @@ if isempty(portfolio)
     %in high-fidelity portion with pre-reqs)
     if rand() < pBackCast
         %while we still have time left and layers that fit
-        while(sum(timeRemaining) > 0 && ~isempty(layers))
+        while((sum(timeRemaining) > 0) && (~isempty(layers)))
     
             %draw one of those layers at random and remove it from the set
             randomDraw = ceil(rand()*length(layers));
@@ -73,41 +75,30 @@ if isempty(portfolio)
 
                 %tempPortfolio = portfolio | prereqs(nextElement,:); %This adds the nextElement plus all other prereqs to 1-dimensional portfolio
                 tempPortfolio = portfolio;
-
-                %If new element is Education, check that agent doesn't already have educational training from previous timesteps
-                if nextElement == 6 && agentTraining(6) == 1
-                    tempPortfolio(nextElement) = false;
-                else
-                    tempPortfolio(nextElement) = true;
-                end
-        
-            end
-        
+                tempPortfolio(nextElement) = true;
                 timeUse = sum(constraints(tempPortfolio,2:end),1);
                 timeExceedance = sum(sum(timeUse > 1)) > 0;
 
-
                 %test whether to add it to the portfolio, if it fits
-                if(~timeExceedance & rand() < pAdd)
+                if(~timeExceedance && rand() < pAdd)
                     portfolio = tempPortfolio;
-
                     %remove any that are OBVIOUSLY over the limit, though this won't
                     %catch any that have other time constraints tied to prereqs
                     timeRemaining = 1 - timeUse;
                     layers(sum(constraints(layers,2:end) > timeRemaining,2) > 0) = [];
                 end
+            end
 
         end
 
         %Now check if portfolio has any aspirational elements
         samplePortfolio = portfolio';
         aspirations = samplePortfolio & ~selectable;
-
     
         %If any elements are aspirations, pick one at random and figure out prereqs
         if any(aspirations)
             indAspiration = find(aspirations);
-            samplePortfolio(indAspiration) = false;
+            samplePortfolio(aspirations) = false;
 
             %Select one aspiration at random
             if length(indAspiration) > 1
@@ -120,7 +111,7 @@ if isempty(portfolio)
             portfolioPrereqs = j(i==indAspiration); 
             portfolioPrereqs(portfolioPrereqs == indAspiration) = []; %remove own layer from aspiration's prereqs
            
-            %Add check for selectable prereqs
+            %Check for any other selectable prereqs
             if any(portfolioPrereqs)
                 samplePortfolio(portfolioPrereqs) = true;
                 duration = utilityDuration(portfolioPrereqs,1) - agentExperience(portfolioPrereqs,1); %Minimum time durations for pre-reqs, accounting for any experience already accumulated
@@ -154,17 +145,17 @@ if isempty(portfolio)
             newIncome = samplePortfolio' * currentUtilities'; %added annual income from pursuing high fidelity portfolio
             agentResources = agentWealth + newIncome * highfidelityDuration;
     
-            if agentResources < utilityCosts(indAspiration)
-                expiry = min(utilityDuration(samplePortfolio,2) - agentExperience); %Maximum time that any layer can be pursued, accounting for experience already built up
-                additionalCycles = ceil((utilityCosts(indAspiration) - agentResources) / newIncome);
+            %if agentResources < utilityCosts(indAspiration)
+                %expiry = min(utilityDuration(samplePortfolio,2) - agentExperience(samplePortfolio)); %Maximum time that any layer can be pursued, accounting for experience already built up
+                %additionalCycles = ceil((utilityCosts(indAspiration) - agentResources) / newIncome);
 
-                if (highfidelityDuration + additionalCycles) < expiry
-                    highfidelityDuration = min(numPeriodsEvaluate, highfidelityDuration + additionalCycles);
+                %if (highfidelityDuration + additionalCycles) < expiry
+                    %highfidelityDuration = min(numPeriodsEvaluate, highfidelityDuration + additionalCycles);
 
                 %Else figure out a way to replace expired layer
-                end
+                %end
 
-            end
+            %end
 
         else
             highfidelityDuration = numPeriodsEvaluate;
@@ -248,11 +239,7 @@ if isempty(portfolio)
         if all(~aspiration)
             highfidelityDuration = numPeriodsEvaluate;
         end
-
     end 
-
-    
-
   end
  
 %Test for empty portfolios

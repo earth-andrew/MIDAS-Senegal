@@ -1,7 +1,7 @@
-load Aspirations_UnitTest_AllPrereqs_10PeriodEvaluate0_14-May-2023_00-05-52.mat
+load Aspirations_UnitTest_AllPrereqs_10PeriodEvaluate_freeEducation0_14-Jul-2023_12-35-07.mat
 shortterm = output;
 
-load Aspirations_UnitTest_AllPrereqs_BackCast_freeEducation0_30-Jun-2023_16-18-09.mat
+load Aspirations_UnitTest_AllPrereqs_10PeriodEvaluate_freeEducation0_14-Jul-2023_15-17-22.mat
 backcast = output;
 
 load Aspirations_UnitTest_AllPrereqs_ForeCast_freeEducation0_13-Jul-2023_17-11-10.mat
@@ -158,7 +158,7 @@ ylabel('Proportion Agents with Unmet Aspirations' ,'FontSize',16)
 legend({'Short Time Horizon (4 yrs)', 'Forecast', 'BackCast'},'FontSize',14)
 
 %% Aspirations by Time
-indexA = 6; %Income Layer for Focal Aspiration
+indexA = 5; %Income Layer for Focal Aspiration
 time = 1:steps;
 plot(time, scenariolist(1).aspirationHistory(indexA,:),'LineWidth',3)
 hold on
