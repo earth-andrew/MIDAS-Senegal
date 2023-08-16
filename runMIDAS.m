@@ -7,10 +7,10 @@ addpath('./Core_MIDAS_Code');
 addpath('./Application_Specific_MIDAS_Code');
 addpath('./Override_Core_MIDAS_Code');
 
-rng('default');
+rng('shuffle');
 
 runName = 'FarmSeasonality';
-series = 'Aspirations_UnitTest_AllPrereqs_10PeriodEvaluate_freeEducation';
+series = 'Aspirations_UnitTest_AllPrereqs_10periodHorizon';
 saveDirectory = './Outputs/';
 
 input = [];

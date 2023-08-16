@@ -13,7 +13,10 @@ function [ currentAgent] = trainingTracker(currentAgent, utilityDuration)
 
 %Add increment of 1 period experience for each layer in agent's current
 %Portfolio
-currentAgent.experience = currentAgent.experience + currentAgent.currentPortfolio';
+numLayers = size(utilityDuration,1);
+currentPortfolio = currentAgent.currentPortfolio(1,1:numLayers)';
+
+currentAgent.experience = currentAgent.experience + currentPortfolio;
 %Check whether agent has achieved any new certifications
 minLength = utilityDuration(:,1);
 newCerts = find(currentAgent.experience >= minLength);

@@ -6,7 +6,6 @@ function selectable = selectableFlag(prereqs, accesscodes, utilityCosts, agentTr
 portfolioLayers = size(prereqs,1);
 totalcost = 0;
 
-%numPortfolios = size(portfolios,1); %Number of portfolios to consider, total possible layers in one portfolio
 selectable = ones(1,portfolioLayers); %1 will designate selectable
 if (~isempty(agentTraining))
     neededTraining = prereqs - eye(portfolioLayers);

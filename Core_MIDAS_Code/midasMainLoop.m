@@ -52,6 +52,7 @@ for indexT = 1:modelParameters.timeSteps
     for indexA = 1:length(currentRandOrder)
         
         currentAgent = livingAgents(currentRandOrder(indexA));
+        currentPortfolio = logical(currentAgent.currentPortfolio(1,1:size(utilityVariables.utilityHistory,2)));
         
         %age the agent
         currentAgent.age = currentAgent.age + modelParameters.cyclesPerTimeStep;
@@ -85,8 +86,8 @@ for indexT = 1:modelParameters.timeSteps
         
         %agent gets updated knowledge of any openings available in layers
         %that it occupies
-        currentAgent.heardOpening(currentAgent.matrixLocation,currentAgent.currentPortfolio) = utilityVariables.hasOpenSlots(currentAgent.matrixLocation,currentAgent.currentPortfolio);
-        currentAgent.timeProbOpeningUpdated(currentAgent.matrixLocation,currentAgent.currentPortfolio) = indexT;
+        currentAgent.heardOpening(currentAgent.matrixLocation,currentPortfolio) = utilityVariables.hasOpenSlots(currentAgent.matrixLocation,currentPortfolio);
+        currentAgent.timeProbOpeningUpdated(currentAgent.matrixLocation,currentPortfolio) = indexT;
  
         %draw number to see if (for female agents) agent gives birth
         if(currentAgent.gender == 2 && currentAgent.age >= modelParameters.ageDecision)
@@ -156,7 +157,7 @@ for indexT = 1:modelParameters.timeSteps
             %create a list of shared layers (in same location) using
             %agentLayers            
             sameLocation = agentLocations == currentAgent.matrixLocation;
-            layerWeight = sparse(ones(sum(sameLocation),1),find(sameLocation), currentAgent.currentPortfolio * agentLayers(sameLocation,:)', 1, length(agentList));
+            layerWeight = sparse(ones(sum(sameLocation),1),find(sameLocation), currentPortfolio * agentLayers(sameLocation,:)', 1, length(agentList));
 
             %identify the new network link using the appropriate function for this
             %simulation
@@ -235,7 +236,7 @@ for indexT = 1:modelParameters.timeSteps
             end
             
             %update these line in the arrays used to choose new links
-            agentLayers(currentAgent.id,:) = currentAgent.currentPortfolio;
+            agentLayers(currentAgent.id,:) = currentAgent.currentPortfolio(1,1:size(utilityVariables.utilityHistory,2));
             
             agentLocations(currentAgent.id) = currentAgent.matrixLocation;
         end
@@ -250,7 +251,7 @@ for indexT = 1:modelParameters.timeSteps
         %each layer
         agentCityIndex = [livingAgents(:).matrixLocation]';
         for indexA = 1:length(livingAgents)
-            currentPortfolio = livingAgents(indexA).currentPortfolio;
+            currentPortfolio = logical(livingAgents(indexA).currentPortfolio(1,1:size(utilityVariables.utilityHistory,2)));
             countAgentsPerLayer(agentCityIndex(indexA), currentPortfolio, indexT) = countAgentsPerLayer(agentCityIndex(indexA), currentPortfolio, indexT) + 1;
         end
         
@@ -274,11 +275,11 @@ for indexT = 1:modelParameters.timeSteps
         %update knowledge
         for indexA = 1:length(livingAgents)
             currentAgent = livingAgents(indexA);
-            
+            currentPortfolio = logical(currentAgent.currentPortfolio(1,1:size(utilityVariables.utilityHistory,2)));
             %find out how much the current agent made, from each layer, and
             %update their knowledge
             
-            newIncome = sum(utilityVariables.utilityHistory(currentAgent.matrixLocation,currentAgent.currentPortfolio(utilityVariables.incomeForms(currentAgent.currentPortfolio)), indexT));
+            newIncome = sum(utilityVariables.utilityHistory(currentAgent.matrixLocation,currentPortfolio(utilityVariables.incomeForms(currentPortfolio)), indexT));
 
             
             %add in any income that has been shared in to the agent, to
@@ -287,8 +288,8 @@ for indexT = 1:modelParameters.timeSteps
             currentAgent.currentSharedIn = 0;
             currentAgent.personalIncomeHistory(indexT) = newIncome;
             
-            currentAgent.incomeLayersHistory(currentAgent.matrixLocation,currentAgent.currentPortfolio,indexT) = true;
-            currentAgent.knowsIncomeLocation(currentAgent.matrixLocation, currentAgent.currentPortfolio) = true;
+            currentAgent.incomeLayersHistory(currentAgent.matrixLocation,currentPortfolio,indexT) = true;
+            currentAgent.knowsIncomeLocation(currentAgent.matrixLocation, currentPortfolio) = true;
             
             
             %estimate the gross intention of sharing out across network
