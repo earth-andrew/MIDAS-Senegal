@@ -5,28 +5,22 @@ function selectable = selectableFlag(prereqs, accesscodes, utilityCosts, agentTr
 
 portfolioLayers = size(prereqs,1);
 totalcost = 0;
+testb = maxDuration;
+testc = agentExperience;
 
 selectable = ones(1,portfolioLayers); %1 will designate selectable
-if (~isempty(agentTraining))
-    neededTraining = prereqs - eye(portfolioLayers);
-    traininggap = agentTraining' - neededTraining; %NxN matrix where -1 indicates a missing prereq for row layer
-    
-    %Need to adjust this to if statement that excludes agent from having to
-    %afford prereqs if they already have certifications
-    for indexI = 1:portfolioLayers
-        %First assume that agent can continue with any layer already in
-        %portfolio, so only check those layers not currently in portfolio
-        if (~agentPortfolio(indexI))
+neededTraining = prereqs - eye(portfolioLayers);
+traininggap = agentTraining' - neededTraining; %NxN matrix where -1 indicates a missing prereq for row layer
+ 
+%Need to adjust this to if statement that excludes agent from having to afford prereqs if they already have certifications
+for indexI = 1:portfolioLayers
+    %Calculate total cost of accessing layer
+    layercost = sum(utilityCosts(accesscodes(:,indexI)>0,2)); %Adding utility costs to access each layer in portfolio
 
-            %Calculate total cost of accessing layer
-            layercost = sum(utilityCosts(accesscodes(:,indexI)>0,2)); %Adding utility costs to access each layer in portfolio
-
-            %If agent is missing required training for layer I set it as not selectable
-            if ((any(traininggap(indexI,:) < 0)) || (layercost > agentWealth) || (agentExperience(indexI) >= maxDuration(indexI)))
-                selectable(indexI) = 0;
-            end
-        end
-    end
+     %If agent is missing required training for layer I set it as not selectable
+     if ((any(traininggap(indexI,:) < 0)) || (agentExperience(indexI) >= maxDuration(indexI)))
+        selectable(indexI) = 0;
+     end
 end
 
 %Convert to logical array with selectable layers set as "true"

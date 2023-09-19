@@ -2,6 +2,8 @@ function [ agentList ] = assignInitialLayers( agentList, utilityVariables, curre
 %assignInitialLayers initializes who is doing what at the start of the
 %simulation
 
+numLayers = size(utilityVariables.utilityDuration,1);
+
 for indexA = 1:length(agentList)
     currentAgent = agentList(indexA);
    %some basic temporary code to initialize layers.  ideally this initial
@@ -12,7 +14,7 @@ for indexA = 1:length(agentList)
 
    
    currentAgent.currentPortfolio = false(size(utilityVariables.utilityLayerFunctions,1),1); 
-   currentAgent.currentPortfolio = false(size(utilityVariables.utilityLayerFunctions,1),1);
+   currentAgent.currentAspiration = false(size(utilityVariables.utilityLayerFunctions,1),1);
    selectable = true(size(utilityVariables.utilityBaseLayers,2),1); %Initially, allow agent to access all layers
 
    %randomly assign a couple of the initial base layers
@@ -26,10 +28,11 @@ for indexA = 1:length(agentList)
    
    currentAgent.currentFidelity = portfolioSet(1,end-1);
    
-   currentAgent.accessCodesPaid(any(utilityVariables.utilityAccessCodesMat(:,currentAgent.currentPortfolio(1,1:end-2), currentAgent.matrixLocation),2)) = true;
+   currentAgent.accessCodesPaid(any(utilityVariables.utilityAccessCodesMat(:,currentAgent.currentPortfolio(1,1:numLayers)', currentAgent.matrixLocation),2)) = true;
    
    currentAgent.firstPortfolio = currentAgent.currentPortfolio;
-   currentAgent = trainingTracker(currentAgent, utilityVariables.utilityDuration);
+   currentAgent = trainingTracker(currentAgent, utilityVariables);
    currentAgent.agentPortfolioHistory{currentT} = currentAgent.currentPortfolio;
+   currentAgent.agentAspirationHistory{currentT} = currentAgent.currentAspiration;
 end
 

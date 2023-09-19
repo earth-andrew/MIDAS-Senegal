@@ -31,11 +31,11 @@ function [ utilityLayerFunctions, utilityHistory, utilityAccessCosts, utilityTim
 
 %all of these variables are generated here.
 
-mean_utility_by_layer = [10; ... %unskilled 1
+mean_utility_by_layer = [modelParameters.unskilled1Utility; ... %unskilled 1
     20; ... %unskilled 2
-    100; ... %skilled
+    modelParameters.skilledUtility; ... %skilled
     10; ... %ag 1
-    30; ... %ag 2
+    modelParameters.ag2Utility; ... %ag 2
     0; ... %school
 ];
 
@@ -81,10 +81,10 @@ localOnly = [0; ... %unskilled 1
 
 timeQs =[0.5 0.5 0.5 0.5; ... %unskilled 1
     0.5 0.5 0.5 0.5; ... %unskilled 2
-    0.75 0.75 0.75 0.75; ... %skilled
+    0.5 0.5 0.5 0.5; ... %skilled (initially 0.75)
     0.0 0.5 0.5 0; ... %ag 1 
-    0.0 0.1 0.1 0; ... %ag 2
-    0.5 0.5 0.5 0.5; ... %school
+    0.0 0.5 0.5 0; ... %ag 2 (initially 0.1)
+    0.75 0.75 0.75 0.75; ... %school
 ];
 
 incomeQs =[1 1 1 1; ... %unskilled 1
@@ -100,7 +100,7 @@ utilityDuration = [4 inf; %unskilled 1
     12 inf; %skilled
     8 inf; %ag 1
     16 inf; %ag 2
-    16 16; %school
+    modelParameters.schoolLength modelParameters.schoolLength; %school
     ];
 
 quarterShare = incomeQs ./ (sum(incomeQs,2));

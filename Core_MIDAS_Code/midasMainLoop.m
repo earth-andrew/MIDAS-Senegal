@@ -221,10 +221,12 @@ for indexT = 1:modelParameters.timeSteps
        
         %draw number to see if agent updates preferences on where to
         %be/what to do
+        %% 
+
         if(rand() < currentAgent.pChoose && indexT > modelParameters.spinupTime && currentAgent.age >= modelParameters.ageDecision)
             [currentAgent, moved] = choosePortfolio(currentAgent, utilityVariables, indexT, modelParameters, mapParameters, demographicVariables, mapVariables);
             currentAgent.agentPortfolioHistory{indexT} = currentAgent.currentPortfolio;
-            aspirationHistory(:,indexT) = aspirationHistory(:,indexT) + currentAgent.currentAspiration';
+            currentAgent.agentAspirationHistory{indexT} = currentAgent.currentAspiration;
             currentAgent.consideredHistory{indexT} = currentAgent.consideredPortfolios;
             if(~isempty(moved))
                 migrations(indexT) = migrations(indexT) + 1;
@@ -422,16 +424,23 @@ agentSummary.trapped = [agentList(:).trapped]';
 
 tempCurrentPortfolio = cell(length(agentList),1);
 tempFirstPortfolio = cell(length(agentList),1);
+tempPortfolioHistory = cell(length(agentList),1);
+tempAspirationHistory = cell(length(agentList),1);
 tempNetwork = cell(length(agentList),1);
 tempMove = cell(length(agentList),1);
 tempAccess = cell(length(agentList),1);
 tempConsideredHistory = cell(length(agentList),1);
 tempTraining = cell(length(agentList),1);
+tempExperience = cell(length(agentList),1);
+
 for indexI = 1:length(agentList)
     tempCurrentPortfolio{indexI} = agentList(indexI).currentPortfolio;
     tempFirstPortfolio{indexI} = agentList(indexI).firstPortfolio;
+    tempPortfolioHistory{indexI} = agentList(indexI).agentPortfolioHistory;
+    tempAspirationHistory{indexI} = agentList(indexI).agentAspirationHistory;
     tempConsideredHistory{indexI} = agentList(indexI).consideredHistory;
     tempTraining{indexI} = agentList(indexI).training;
+    tempExperience{indexI} = agentList(indexI).experience;
     try
     tempNetwork{indexI} = [agentList(indexI).network(:).id];
     catch
@@ -442,11 +451,14 @@ for indexI = 1:length(agentList)
 end
 agentSummary.currentPortfolio = tempCurrentPortfolio;
 agentSummary.firstPortfolio = tempFirstPortfolio;
+agentSummary.portfolioHistory = tempPortfolioHistory;
+agentSummary.aspirationHistory = tempAspirationHistory;
 agentSummary.consideredHistory = tempConsideredHistory;
 agentSummary.network = tempNetwork;
 agentSummary.moveHistory = tempMove;
 agentSummary.accessCodes = tempAccess;
 agentSummary.training = tempTraining;
+agentSummary.experience = tempExperience;
 
 outputs.agentSummary = agentSummary;
 

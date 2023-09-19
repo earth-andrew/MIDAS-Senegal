@@ -67,6 +67,7 @@ newAgent.training = false(size(utilityVariables.utilityLayerFunctions,1),1);
 newAgent.experience = zeros(size(utilityVariables.utilityLayerFunctions,1),1);
 newAgent.consideredHistory = cell(size(modelParameters.timeSteps,1));
 newAgent.agentPortfolioHistory = cell(size(modelParameters.timeSteps,1));
+newAgent.agentAspirationHistory = cell(size(modelParameters.timeSteps,1));
 newAgent.pInteract = pInteract;
 newAgent.pMeetNew = pMeetNew;
 newAgent.pAddFitElement = pAddFitElement;

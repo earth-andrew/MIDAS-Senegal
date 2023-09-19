@@ -1,11 +1,11 @@
-load Aspirations_UnitTest_AllPrereqs_10periodHorizon0_15-Aug-2023_19-27-13.mat
+load Aspirations_UnitTest_AllPrereqs_NoAspirations0_18-Sep-2023_16-55-50.mat
 shortterm = output;
 
-load Aspirations_UnitTest_AllPrereqs_Backcasting0_11-Aug-2023_15-57-46.mat
-backcast = output;
-
-load Aspirations_UnitTest_AllPrereqs_Forecasting0_15-Aug-2023_18-37-27.mat
+load Aspirations_UnitTest_AllPrereqs_Forecasting0_18-Sep-2023_21-12-44.mat
 forecast = output;
+
+load Aspirations_UnitTest_AllPrereqs_Backcasting0_18-Sep-2023_16-27-51.mat
+backcast = output;
 
 scenariolist = [shortterm, forecast, backcast];
 scenarios= length(scenariolist);
@@ -55,8 +55,34 @@ ax.FontSize = 16;
 ylabel('Proportion of Agents','FontSize',16)
 xlabel('Income Layers', 'FontSize',16)
 legend({'No Aspirations', 'Forecast', 'BackCast'},'FontSize',14)
+
+%% Breakdown of job distributions by educational status
+ed_categories = 2; %Number of educational categories - no education, some education, full training
+jobsxeducation = zeros(scenarios, ed_categories, jobcats);
+
+termPortfolio = cell(length(scenarios));
+ed_status = zeros(scenarios, numAgents);
+
+for indexK = 1:1:scenarios
+    for indexA = 1:1:numAgents
+        termPortfolio{indexK}(indexA,1:jobcats) = [scenariolist(indexK).agentSummary.currentPortfolio{indexA}(1,1:jobcats)];
+        ed_status(indexK, indexA) = scenariolist(indexK).agentSummary.training{indexA}(end);
+    end
+end
+
+
+
+for indexK = 1:1:scenarios
+    for indexE = 1:1:ed_categories
+        test1 = indexE;
+        selected = find(ed_status(indexK,:) == (indexE-1));
+        jobsxeducation(indexK, indexE, :) = sum(termPortfolio{indexK}(selected,:),1) ./numAgents;
+    end
+end
+
+
 %% Line Plot of job distributions over time
-indexL = 6; %Layer of Comparison
+indexL = 2; %Layer of Comparison
 categories = {'Unskilled 1', 'Unskilled 2', 'Skilled', 'Ag1', 'Ag2', 'School'};
 plot(time,squeeze(jobs(1,indexL,:)),'LineWidth',3)
 hold on
@@ -158,14 +184,14 @@ ylabel('Proportion Agents with Unmet Aspirations' ,'FontSize',16)
 legend({'Short Time Horizon (4 yrs)', 'Forecast', 'BackCast'},'FontSize',14)
 
 %% Aspirations by Time
-indexA = 5; %Income Layer for Focal Aspiration
+indexA = 3; %Income Layer for Focal Aspiration
 time = 1:steps;
 plot(time, scenariolist(1).aspirationHistory(indexA,:),'LineWidth',3)
 hold on
 for indexS = 2:1:scenarios
     plot(time, scenariolist(indexS).aspirationHistory(indexA,:),'LineWidth',3)
 end
-
+hold off
 ax = gca;
 ax.FontSize = 16;
 xlabel('Time','FontSize',16)

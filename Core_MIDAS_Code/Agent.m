@@ -40,6 +40,7 @@ classdef Agent < handle
        currentFidelity
        firstPortfolio
        agentPortfolioHistory
+       agentAspirationHistory
        personalIncomeHistory
        currentSharedIn
        lastIntendedShareIn
