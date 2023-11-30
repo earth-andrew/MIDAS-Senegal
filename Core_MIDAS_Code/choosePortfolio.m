@@ -107,7 +107,7 @@ consideredPortfolioSet = []; %List of portfolios considered by agent across all 
 
 %Update agent pre-requisites, with special function for education (to
 %account for minimum number of years needed)
-agent = trainingTracker(agent, utilityVariables);
+agent = trainingTracker(agent, utilityVariables, modelParameters);
 
 %Check which layers are "selectable" based on agent prereqs
 selectable = selectableFlag(utilityVariables.utilityPrereqs, utilityVariables.utilityAccessCodesMat, utilityVariables.utilityAccessCosts, agent.training, agent.experience, agent.currentPortfolio, agent.wealth, utilityVariables.utilityDuration(:,2));
@@ -160,7 +160,7 @@ for indexL = 1:length(locationList)
     %last, come up with a few random portfolios to finish
     for indexP = (currentPortfolio):totalNumPortfolios
 
-        [nextRandom] = createPortfolio([], find(any(agent.knowsIncomeLocation(locationList(indexL),:),1)),utilityVariables.utilityTimeConstraints, utilityVariables.utilityPrereqs, agent.pAddFitElement, agent.training, agent.experience, utilityVariables.utilityAccessCosts, utilityVariables.utilityDuration, agent.numPeriodsEvaluate, selectable, utilityVariables.utilityHistory(indexL,:,currentT-4:currentT-1), agent.wealth, agent.pBackCast, utilityVariables.utilityAccessCodesMat);
+        [nextRandom] = createPortfolio([], find(any(agent.knowsIncomeLocation(locationList(indexL),:),1)),utilityVariables.utilityTimeConstraints, utilityVariables.utilityPrereqs, agent.pAddFitElement, agent.training, agent.experience, utilityVariables.utilityAccessCosts, utilityVariables.utilityDuration, agent.numPeriodsEvaluate, selectable, utilityVariables.utilityHistory(indexL,:,currentT-4:currentT-1), agent.wealth, agent.pBackCast, utilityVariables.utilityAccessCodesMat, modelParameters);
         if(~isempty(nextRandom))
             portfolioSet{indexP} = nextRandom;   
         end

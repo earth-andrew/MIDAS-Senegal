@@ -1,20 +1,23 @@
-load Aspirations_UnitTest_AllPrereqs_NoAspirations0_18-Sep-2023_16-55-50.mat
+load Aspirations_SenegalTest_AllPrereqs_Shortterm_t500_30-Nov-2023_16-07-21.mat
 shortterm = output;
 
-load Aspirations_UnitTest_AllPrereqs_Forecasting0_18-Sep-2023_21-12-44.mat
-forecast = output;
-
-load Aspirations_UnitTest_AllPrereqs_Backcasting0_18-Sep-2023_16-27-51.mat
+load Aspirations_SenegalTest_AllPrereqs_Backcasting_t500_30-Nov-2023_15-45-25.mat
 backcast = output;
 
-scenariolist = [shortterm, forecast, backcast];
+load Aspirations_SenegalTest_AllPrereqs_Forecasting_t500_30-Nov-2023_15-58-02.mat
+forecast = output;
+
+
+scenariolist = [shortterm, backcast, forecast];
+%scenariolist = shortterm;
 scenarios= length(scenariolist);
 locations = 45;
-jobcats = 6;
+
+jobcats = 14;
 seasonalthresh = 4; %Number of periods within which a "seasonal migrant" must migrate and make a return trip
 numAgents = height(scenariolist(1).agentSummary(:,1));
 %Create time vector
-steps = 170;
+steps = 50;
 time = 1:steps;
 
 jobs = zeros(scenarios, jobcats, steps);
@@ -30,32 +33,135 @@ end
 cm = colororder;
 
 % Bar Graph of job distribution at terminal time
-X = categorical({'Unskilled 1', 'Unskilled 2', 'Skilled', 'Ag1', 'Ag2', 'School'});
-X = reordercats(X, {'Unskilled 1', 'Unskilled 2', 'Skilled', 'Ag1', 'Ag2', 'School'});
+X = categorical({'Ag-Aqua R', 'Ag-Aqua U', 'Livestock R', 'Livestock U', 'Professional R', 'Professional U', 'Services R','Services U', 'Trades R','Trades U', 'Small Business R', 'Small Business U', 'Education R', 'Education U'});
+X = reordercats(X, {'Ag-Aqua R', 'Ag-Aqua U', 'Livestock R', 'Livestock U', 'Professional R', 'Professional U', 'Services R','Services U', 'Trades R','Trades U', 'Small Business R', 'Small Business U', 'Education R', 'Education U'});
 Y = [];
 for indexC = 1:1:scenarios
     Y = [Y; jobs(indexC,:,end)];
 end
 %bar(X, Y(1,:), 'FaceColor', cm(1,:))
-%hold on
-%bar(X, Y(2,:), 'EdgeColor', cm(1,:), 'FaceColor', 'white')
+hold on
 
 %for indexI = 2:1:height(Y)
     %if mod(indexI,2) == 0
         %bar(X, Y(indexI,:), 'FaceColor', cm(ceil(indexI/2),:))
     %else
-       % bar(X, Y(indexI,:), 'EdgeColor', cm(ceil(indexI/2),:), 'FaceColor', 'white')
-   % end
+        %bar(X, Y(indexI,:), 'EdgeColor', cm(ceil(indexI/2),:), 'FaceColor', 'white')
+    %end
 %end
 %hold off
-
+%hold on
 bar(X,Y,1.0)
+hold off
 ax = gca;
 ax.FontSize = 16;
 ylabel('Proportion of Agents','FontSize',16)
 xlabel('Income Layers', 'FontSize',16)
-legend({'No Aspirations', 'Forecast', 'BackCast'},'FontSize',14)
+legend({'ShortTerm', 'BackCast', 'Forecast'},'FontSize',14)
 
+%% Plot of Total Population for Given Admin Region, across Scenarios
+regionalPop = zeros(scenarios,locations,steps);
+[sortedAdminUnits, sortedIndex] = sort(scenariolist(1).locations.matrixID);
+placeNames = scenariolist(1).locations.source_ADM2_FR(sortedIndex)';
+
+for indexK = 1:scenarios
+    for indexA = 1:locations
+        for indexT = 1:steps
+            regionalPop(indexK,indexA,indexT) = sum(scenariolist(indexK).countAgentsPerLayer(indexA,:,indexT));
+        end
+    end
+end
+
+indexA = 1;
+
+X = 1:steps;
+Y = regionalPop(:,indexA,:);
+
+plot(X,Y(1,:))
+hold on
+for indexK = 2:scenarios
+    plot(X,Y(indexK,:))
+end
+hold off
+ax = gca;
+ax.FontSize = 16;
+ylabel(['Population in ' placeNames(indexA)],'FontSize',16)
+xlabel('Time Steps', 'FontSize',16)
+legend({'ShortTerm', 'BackCast', 'Forecast'},'FontSize',14)
+
+%% Plot of Average Wealth over Time
+scenIndex = 2;
+X = 1:steps;
+lag = 4; %number of periods over which to average acrosss time
+avgWealth = scenariolist(scenIndex).averageWealth;
+
+Y = movavg(avgWealth, 'simple', lag);
+
+plot(X,Y,'LineWidth',3)
+
+ax = gca;
+ax.FontSize = 16;
+ylabel('Average Wealth of Community','FontSize',16)
+xlabel('Time', 'FontSize',16)
+%% Plot of Individual Agent Wealth over time
+indexA = 1000;
+X = 1:steps;
+Y = cell2mat(output.agentSummary.wealthHistory{indexA});
+
+plot(X,Y,'LineWidth',3)
+ax = gca;
+ax.FontSize = 16;
+ylabel('Individual Wealth','FontSize',16)
+xlabel('Time', 'FontSize',16)
+
+%% Inequality Plots - Average of wealth for top and bottom X% at end of spin-up time to end of model time
+percentile = 0.1; %cutoff of top and bottom X
+cutoffNumber = floor(percentile * numAgents); %Number of agents in each bin
+spinupTime = 10; %number of periods after which model has been initialized
+wealth = zeros(numAgents,steps);
+wealthPoorest = zeros(cutoffNumber,steps);
+avgWealthPoorest = zeros(steps);
+wealthRichest = zeros(cutoffNumber, steps);
+avgWealthRichest = zeros(cutoffNumber,steps);
+for indexA = 1:1:numAgents
+    wealthHistory = cell2mat(output.agentSummary.wealthHistory{indexA});
+    for indexT = 1:size(wealthHistory,2)
+        wealth(indexA,indexT) = wealthHistory(:,indexT);
+    end
+end
+startingWealth  = wealth(:,(spinupTime+1));
+[sortedwealth, sortIndex] = sort(startingWealth,'ascend');
+
+poorestAgents = sortIndex(1:cutoffNumber);
+richestAgents = sortIndex(end-cutoffNumber:end);
+
+for indexW = 1:cutoffNumber
+    wealthPoor = cell2mat(output.agentSummary.wealthHistory{poorestAgents(indexW)});
+    wealthRich = cell2mat(output.agentSummary.wealthHistory{richestAgents(indexW)});
+    for indexP = 1:size(wealthPoor,2)
+        wealthPoorest(indexW,indexP) = wealthPoor(:,indexP);
+    end
+
+    for indexR = 1:size(wealthRich,2)
+        wealthRichest(indexW,indexR) = wealthRich(:,indexR);
+    end
+    
+end
+
+avgWealthPoorest = mean(wealthPoorest,1, 'omitnan')
+avgWealthRichest = mean(wealthRichest,1, 'omitnan')
+
+Y1 = avgWealthPoorest;
+Y2 = avgWealthRichest;
+plot(X,Y1,'LineWidth',3, 'DisplayName', ['Poorest ' num2str(round(percentile*100)) ' % of Agents'])
+hold on
+plot(X,Y2,'LineWidth',3, 'DisplayName', ['Richest ' num2str(round(percentile * 100)) ' % of Agents'])
+hold off
+ax = gca;
+ax.FontSize = 16;
+ylabel('Average Wealth','FontSize',16)
+xlabel('Time', 'FontSize',16)
+legend()
 %% Breakdown of job distributions by educational status
 ed_categories = 2; %Number of educational categories - no education, some education, full training
 jobsxeducation = zeros(scenarios, ed_categories, jobcats);
@@ -82,8 +188,8 @@ end
 
 
 %% Line Plot of job distributions over time
-indexL = 2; %Layer of Comparison
-categories = {'Unskilled 1', 'Unskilled 2', 'Skilled', 'Ag1', 'Ag2', 'School'};
+indexL = 13; %Layer of Comparison
+categories = {'Ag-Aqua R', 'Ag-Aqua U', 'Livestock R', 'Livestock U', 'Professional R', 'Professional U', 'Services R','Services U', 'Trades R','Trades U', 'Small Business R', 'Small Business U', 'Education R', 'Education U'};
 plot(time,squeeze(jobs(1,indexL,:)),'LineWidth',3)
 hold on
 for indexS = 2:1:scenarios
@@ -94,7 +200,69 @@ ax = gca;
 ax.FontSize = 16;
 xlabel('Time','FontSize',16)
 ylabel(['Proportion of Agents in ' categories(indexL)],'FontSize',16)
-legend({'No Aspirations', 'Forecast', 'BackCast'},'FontSize',14)
+legend({'Short Term', 'Backcast', 'Forecast'},'FontSize',14)
+
+
+%% %% Calculating Aspirations by time
+
+aspirations = zeros(scenarios, jobcats, steps);
+
+%Quantifying agents by aspirations category over time
+for indexK = 1:1:scenarios
+    numAgents = height(scenariolist(indexK).agentSummary(:,1));
+    test1 = indexK
+    for indexA = 1:1:numAgents
+        lifeA = length(scenariolist(indexK).agentSummary(indexA,:).aspirationHistory{1,1});
+        for indexI = 1:1:lifeA
+                test1 = scenariolist(indexK).agentSummary(indexA,:).aspirationHistory{1,1}{1,indexI};
+                %Figure out how to handle doubles when agent didn't exist
+                aspIndex = find(scenariolist(indexK).agentSummary(indexA,:).aspirationHistory{1,1}{1,indexI});
+                aspirations(indexK,aspIndex,indexI) = aspirations(indexK,aspIndex,indexI) + 1;
+        end
+    end
+    aspirations(indexK,:,:) = aspirations(indexK,:,:) / numAgents
+end
+%% Plotting Aspirations across Scenarios by Individual Layer
+
+test = aspirations(2,:,end)
+indexL = 3; %Layer of Comparison
+categories = {'Ag-Aqua R', 'Ag-Aqua U', 'Livestock R', 'Livestock U', 'Professional R', 'Professional U', 'Services R','Services U', 'Trades R','Trades U', 'Small Business R', 'Small Business U', 'Education R', 'Education U'};
+plot(time,squeeze(aspirations(1,indexL,:)),'LineWidth',3)
+hold on
+for indexS = 2:1:scenarios
+    plot(time,squeeze(aspirations(indexS,indexL,:)),'LineWidth',3)
+end
+hold off
+ax = gca;
+ax.FontSize = 16;
+xlabel('Time','FontSize',16)
+ylabel(['Proportion of Agents Aspiring to ' categories(indexL)],'FontSize',16)
+legend({'Short-Term Aspirations (1 Year)', 'Backcast', 'Forecast'},'FontSize',14)
+%% Plotting Aspirations across Layers by Individual Scenario
+indexS = 1; %Scenario of focus
+categories = {'Ag-Aqua R', 'Ag-Aqua U', 'Livestock R', 'Livestock U', 'Professional R', 'Professional U', 'Services R','Services U', 'Trades R','Trades U', 'Small Business R', 'Small Business U', 'Education R', 'Education U'};
+%top_categories = {'Livestock R', 'Livestock U','Professional R', 'Professional U','Trades R','Trades U'};
+scenario_names = {'Short Term', 'Backcasting', 'Forecasting'};
+%plot(time,squeeze(aspirations(indexS,3,:)),'LineWidth',3)
+plot(time,squeeze(aspirations(indexS,1,:)),'LineWidth',3)
+hold on
+for indexL = 2:1:jobcats
+    plot(time,squeeze(aspirations(indexS,indexL,:)),'LineWidth',3)
+end
+%for indexL = 4:1:6
+    %plot(time,squeeze(aspirations(indexS,indexL,:)),'LineWidth',3)
+%end
+
+%for indexL = 9:1:10
+    %plot(time,squeeze(aspirations(indexS,indexL,:)),'LineWidth',3)
+%end
+hold off
+
+ax=gca;
+ax.FontSize=16;
+xlabel('Time','FontSize',16)
+ylabel(['Proportion of Agents Aspiring to Indicated Layer for ' scenario_names(indexS)], 'FontSize',16)
+legend(categories,'FontSize',14)
 
 %% Migration Trips over time
 %%Line Plot of Migration Trips
@@ -113,8 +281,78 @@ hold off
 ax = gca;
 ax.FontSize = 16;
 xlabel('Time','FontSize',16)
-ylabel('Migration Proportion','FontSize',16)
-legend({'Short Time Horizon', 'Forecast', 'BackCast'},'FontSize',14)
+ylabel('Proportion of Agents Migrating','FontSize',16)
+legend({'Short Time Horizon', 'Backcast', 'Forecast'},'FontSize',14)
+
+%% Net Migration by Region over Model Run
+cutoffIndex = 25; %i.e. show top X number of places on plot
+cumulativeInMigration = zeros(locations);
+cumulativeOutMigration = zeros(locations);
+[sortedAdminUnits, sortedIndex] = sort(scenariolist(indexS).locations.matrixID);
+placeNames = scenariolist(indexS).locations.source_ADM2_FR(sortedIndex)';
+shortPlaceNames = placeNames(1:cutoffIndex);
+
+netMigration = zeros(locations);
+indexS = 1;
+cumulativeInMigration = sum(scenariolist(indexS).inMigrations,2);
+cumulativeOutMigration = sum(scenariolist(indexS).outMigrations,2);
+netMigration = cumulativeInMigration - cumulativeOutMigration;
+Y = netMigration';
+shortY = Y(1:cutoffIndex);
+X = categorical(shortPlaceNames);
+X = reordercats(X,shortPlaceNames);
+
+for indexS = 2:1:scenarios
+    cumulativeInMigration = sum(scenariolist(indexS).inMigrations,2);
+    cumulativeOutMigration = sum(scenariolist(indexS).outMigrations,2);
+    netMigration = cumulativeInMigration - cumulativeOutMigration;
+    Y = [Y; netMigration'];
+    shortY = [shortY; netMigration(1:cutoffIndex)']
+end
+
+bar(X,shortY)
+ax.FontSize = 16;
+xlabel('Admin Regions','FontSize',16)
+ylabel('Net Migration (persons)','FontSize',16)
+legend({'Short Time Horizon', 'Backcast', 'Forecast'},'FontSize',14);
+ax = gca;
+
+%% %% Net Proportional Migration by Region over Model Run
+cutoffIndex = 15; %i.e. show top X number of places on plot
+cumulativeInMigration = zeros(locations);
+cumulativeOutMigration = zeros(locations);
+initialPopulation = zeros(locations);
+[sortedAdminUnits, sortedIndex] = sort(scenariolist(indexS).locations.matrixID);
+placeNames = scenariolist(indexS).locations.source_ADM2_FR(sortedIndex)';
+shortPlaceNames = placeNames(1:cutoffIndex);
+proportionalMigration = zeros(locations);
+
+indexS = 1;
+cumulativeInMigration = sum(scenariolist(indexS).inMigrations,2);
+cumulativeOutMigration = sum(scenariolist(indexS).outMigrations,2);
+initialPopulation = sum(scenariolist(indexS).countAgentsPerLayer(:,:,10),2)
+proportionalMigration = (cumulativeInMigration - cumulativeOutMigration) ./ initialPopulation
+Y = proportionalMigration';
+shortY = Y(1:cutoffIndex)
+X = categorical(shortPlaceNames);
+X = reordercats(X,shortPlaceNames);
+
+for indexS = 2:1:scenarios
+    cumulativeInMigration = sum(scenariolist(indexS).inMigrations,2);
+    cumulativeOutMigration = sum(scenariolist(indexS).outMigrations,2);
+    proportionalMigration = (cumulativeInMigration - cumulativeOutMigration) ./ initialPopulation
+    Y = [Y; proportionalMigration'];
+    shortY = [shortY; proportionalMigration(1:cutoffIndex)']
+end
+
+bar(X,shortY)
+ax.FontSize = 16;
+xlabel('Admin Regions','FontSize',16)
+ylabel('Proportional Migration (Fraction of Original Population)','FontSize',16)
+legend({'Short Time Horizon', 'Backcast', 'Forecast'},'FontSize',14);
+ax = gca;
+
+
 %% Seasonal Migration
 seasonalmigration = zeros(scenarios,1);
 seasonaltrips = zeros(scenarios, numAgents);
@@ -165,7 +403,8 @@ ylabel('Number of Cyclical Trips  per Agent','FontSize',16)
 scenarios = length(scenariolist);
 aspirationProp = zeros(scenarios,steps);
 simpleaspiration = zeros(scenarios,steps);
-categories = {'Unskilled 1', 'Unskilled 2', 'Skilled', 'Ag1', 'Ag2', 'School'};
+categories = {'Ag-Aqua R', 'Ag-Aqua U', 'Livestock R', 'Livestock U', 'Professional R', 'Professional U', 'Services R','Services U', 'Trades R','Trades U', 'Small Business R', 'Small Business U', 'Education R', 'Education U'};
+
 lag = 4;
 
 for indexS = 1:1:scenarios
@@ -181,7 +420,7 @@ ax = gca;
 ax.FontSize = 16;
 xlabel('Time','FontSize',16)
 ylabel('Proportion Agents with Unmet Aspirations' ,'FontSize',16)
-legend({'Short Time Horizon (4 yrs)', 'Forecast', 'BackCast'},'FontSize',14)
+legend({'Short Term', 'Backcast', 'Forecast'},'FontSize',14)
 
 %% Aspirations by Time
 indexA = 3; %Income Layer for Focal Aspiration

@@ -52,6 +52,7 @@ newAgent.knowledgeShareFrac = knowledgeShareFrac;
 newAgent.shareCostThreshold = shareCostThreshold;
 newAgent.incomeShareFraction = incomeShareFraction;
 newAgent.wealth = wealth;
+newAgent.wealthHistory = cell(size(modelParameters.timeSteps,1));
 newAgent.realizedUtility = 0;
 newAgent.numBestLocation = numBestLocation;
 newAgent.numBestPortfolio = numBestPortfolio;

@@ -34,14 +34,21 @@ function [ utilityLayerFunctions, utilityHistory, utilityAccessCosts, utilityTim
 
 %all of these variables are generated here.
 
-load([modelParameters.utilityDataPath '/utility_base_layers.mat'])
+%CHECK HOW MEAN VALUES IS CALCULATED - DO THESE REPRESENT MEANS OVER TIME
+%(AS THEY SHOULD) AND ARE THEY GREATER THAN COSTS?
+
+%load([modelParameters.utilityDataPath '/utility_base_layers.mat'])
+load([modelParameters.utilityDataPath '/SenegalIncomeData.mat'])
 
 %other things to port in or define:
 noise = modelParameters.utility_noise;
 iReturn = modelParameters.utility_iReturn;
 iDiscount = modelParameters.utility_iDiscount;
 iYears = modelParameters.utility_iYears;
-utility_levels = 5;
+utility_levels = 1;
+utility_layers = table2array(orderedTable);
+numLocations = size(utility_layers,1);
+utility_layers = [utility_layers zeros(numLocations,1) zeros(numLocations,1)]; %Add 2 additional income layers for education - rural/urban
 
 %%%%%%%%%%%%%%%%%%%%%%%
 %%utilityLayerFunctions
@@ -56,7 +63,7 @@ utility_levels = 5;
 %this anonymous function structure.
 
 utilityLayerFunctions = [];
-for indexI = 1:(size(utility_layers,2))  %16 (or 13) different sources, with 4 levels
+for indexI = 1:(size(utility_layers,2))  %6  incomesources * rural/urban categories for each 
     utilityLayerFunctions{indexI,1} = @(k,m,nExpected,n_actual, base) base * (m * nExpected) / (max(0, n_actual - m * nExpected) * k + m * nExpected);   %some income layer - base layer input times density-dependent extinction
 end
 
@@ -74,34 +81,72 @@ utilityHistory = zeros(height(locations),height(utilityLayerFunctions),timeSteps
 %utilityBaseLayers has dimensions of (location, activity, time)
 
 
-localOnly = [1; ... %blue collar
-    0; ... %white collar
-    0; ... %service
-    1; ... %ag-fish
-    1; ... %livestock
-    1; ... %small business
+
+localOnly = [1; ... %ag-aqua rural
+    1; %ag-aqua urban
+    1; ... %livestock rural
+    1; %livestock urban
+    0; ... %professional rural
+    0; %professional urban
+    0; ... %services rural
+    0; %services urban
+    1; ... %small business rural
+    1; %small business urban
+    1; ... %trades rural
+    1; %trades urban
+    0; ... %education rural
+    0; %education urban
 ];
 
-timeQs =[.5 .5 .5 .5; ... %blue collar
-    .5 .5 .5 .5; ... %white collar
-    .5 .5 .5 .5; ... %service
-    0 .5 .5 0; ... %ag-fish
-    .5 0 0 0; ... %livestock
-    .5 .5 .5 .5];  %small business
 
-incomeQs =[1 1 1 1; ... %blue collar
-    1 1 1 1; ... %white collar
-    1 1 1 1; ... %service
-    0 0 0 1; ... %ag-fish
-    0 0 1 0; ... %livestock
-    1 1 1 1];  %small business
+timeQs =[0 .5 .5 0; ... %ag-aqua rural
+     0 .5 .5 0; %ag-aqua urban
+    .5 0 0 0; ... %livestock rural
+    .5 0 0 0; %livestock urban
+    .75 .75 .75 .75; ... %professional rural
+    .75 .75 .75 .75; %professional urban
+    .5 .5 .5 .5; ... %services rural
+    .5 .5 .5 .5; %services urban
+    .5 .5 .5 .5; ... %small business rural
+    .5 .5 .5 .5; %small business urban
+    .5 .5 .5 .5; ... %trades rural
+    .5 .5 .5 .5; %trades urban
+    .75 .75 .75 .75; %education rural
+    .75 .75 .75 .75];  %education urban
 
-utilityDuration = [1;
-                   1;
-                   1;
-                   1;
-                   1;
-                   1]
+
+incomeQs =[0 0 0 1; ... %ag-aqua rural
+    0 0 0 1; %ag-aqua urban
+    0 0 1 0; ... %livestock rural
+    0 0 1 0; %livestock urban
+    1 1 1 1; ... %professional rural
+    1 1 1 1; %professional urban
+    1 1 1 1; ... %services rural
+    1 1 1 1; %services urban
+    1 1 1 1; ... %small businesses rural
+    1 1 1 1; %small business urban
+    1 1 1 1; ... %trades rural
+    1 1 1 1; %trades urban
+    0 0 0 0; %education rural
+    0 0 0 0];  %education urban
+
+% N x 2 Matrix specifying the [minimum, maximum] number of cycles that each layer entails
+
+utilityDuration = [8 inf; %ag-aqua rural
+    8 inf; %ag-aqua urban
+    16 inf; %livestock rural
+    16 inf; %livestock urban
+    12 inf; %professional rural
+    12 inf; %professional urban
+    8 inf;  %services rural
+    8 inf; %services urban
+    8 inf; %small business rural
+    8 inf; %small business urban
+    4 inf; %trades rural
+    4 inf; %trades urban
+    modelParameters.schoolLength modelParameters.schoolLength %education rural
+    modelParameters.schoolLength modelParameters.schoolLength]; %education urban
+
 
 quarterShare = incomeQs ./ (sum(incomeQs,2));
 
@@ -153,8 +198,9 @@ utilityAccessCodesMat = false(numCodes,height(utilityLayerFunctions),height(loca
 utilityAccessCosts = [];
 for indexI = 1:height(localOnly)
    if(localOnly(indexI))
-        meanValues = mean(utilityBaseLayers(:,(indexI-1)*utility_levels+1:indexI*utility_levels,:,:),3);
-        accessCost = meanValues / (1 + iReturn) * ((1+iDiscount)^iYears -1) / iDiscount / ((1 + iDiscount)^iYears);  %using CCRF to estimate access cost
+        %meanValues = mean(utilityBaseLayers(:,(indexI-1)*utility_levels+1:indexI*utility_levels,:,:),3);
+        meanValues = mean(utilityBaseLayers(:,indexI,:),3);
+        accessCost = meanValues / (1 + iReturn) * ((1+iDiscount)^iYears -1) / iDiscount / ((1 + iDiscount)^iYears);  %using Capital Cost Recovery Factor to estimate access cost
         for indexJ = 1:utility_levels
            utilityAccessCosts = [utilityAccessCosts; [(accessCodeCount:accessCodeCount + height(locations)-1)' accessCost(:,indexJ)]];   
            for indexK = 1:height(locations)
@@ -163,7 +209,8 @@ for indexI = 1:height(localOnly)
            end
         end       
    else
-        meanValues = mean(mean(utilityBaseLayers(:,(indexI-1)*utility_levels+1:indexI*utility_levels,:,:),3),1);
+        %meanValues = mean(mean(utilityBaseLayers(:,(indexI-1)*utility_levels+1:indexI*utility_levels,:,:),3),1);
+        meanValues = mean(mean(utilityBaseLayers(:,indexI,:),3),1);
         accessCost = meanValues / (1 + iReturn) * ((1+iDiscount)^iYears -1) / iDiscount / ((1 + iDiscount)^iYears);
         for indexJ = 1:utility_levels
            utilityAccessCosts = [utilityAccessCosts; [(accessCodeCount+1) accessCost(indexJ)]];   
@@ -172,6 +219,7 @@ for indexI = 1:height(localOnly)
         end
    end
 end
+
 
 %%%%%%%%%%%%%%%%%
 %nExpected
@@ -189,9 +237,15 @@ numAgentsModel = locationProb * modelParameters.numAgents;
 %layer, so this one is a simple multiplication.  first 15 of 30 layers are
 %'jobs' with fixed slots available, last 15 of 30 are small enterprises
 %without fixed slots
-nExpected =  (numAgentsModel*ones(1,size(utility_layers_prop,2))).*utility_layers_prop;
+
+%FIX PROPORTIONS FOR UTILITY_LAYERS_PROP (FOR NOW JUST SET TO
+%UTILITY_LAYERS. AND CHECK HARDSLOTCOUNT
+
+%nExpected =  (numAgentsModel*ones(1,size(utility_layers_prop,2))).*utility_layers_prop;
+nExpected =  (numAgentsModel*ones(1,size(utility_layers,2)));
+
 hardSlotCountYN = false(size(nExpected));
-hardSlotCountYN(:,1:15) = true;
+%hardSlotCountYN(:,1:15) = true;
 
 %utility layers may be income, use value, etc.  identify what form of
 %utility it is, so that they get added and weighted appropriately in
@@ -241,9 +295,20 @@ utilityPrereqs = zeros(size(utilityTimeConstraints,1));
 
 
 %in the form utilityPrereqs('this layer' , 'requires this layer') = 1;
-utilityPrereqs(2, 1) = 0; %unskilled 2 requires unskilled 1
-utilityPrereqs(5, 4) = 0; %ag 2 requires ag 1
-utilityPrereqs(3, 6) = 1; %skilled labor requires school
+%utilityPrereqs(2, 1) = 0; %unskilled 2 requires unskilled 1
+%utilityPrereqs(5, 4) = 0; %ag 2 requires ag 1
+%utilityPrereqs(3, 6) = 1; %skilled labor requires school
+
+utilityPrereqs(3,1) = 1; %Livestock in rural space requires ag in rural space
+utilityPrereqs(4,2) = 1; %Livestock in urban space requires ag in urban space
+utilityPrereqs(9,7) = 1; 
+utilityPrereqs(9,8) = 1; %small business require some prior service experience in either rural or urban sestting
+utilityPrereqs(10,7) = 1;
+utilityPrereqs(10,8) = 1;
+utilityPrereqs(5,13) = 1; %Professional work in rural or urban space requires education in rural or urban setting
+utilityPrereqs(5,14) = 1;
+utilityPrereqs(6,13) = 1;
+utilityPrereqs(6,14) = 1;
 
 
 
@@ -260,7 +325,6 @@ utilityPrereqs = sparse(utilityPrereqs);
 %the model interprets layers (occupying Q4 means occupying Q4 + all
 %pre-requisites) and the input data (occupying Q4 means only occupying Q4)
 tempExpected = zeros(size(nExpected));
-
 for indexI = 1:size(nExpected,2)
    tempExpected(:,indexI) = sum(nExpected(:,utilityPrereqs(:,indexI) > 0),2); 
 end

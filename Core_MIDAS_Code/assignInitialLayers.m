@@ -1,4 +1,4 @@
-function [ agentList ] = assignInitialLayers( agentList, utilityVariables, currentT )
+function [ agentList ] = assignInitialLayers( agentList, utilityVariables, currentT, modelParameters )
 %assignInitialLayers initializes who is doing what at the start of the
 %simulation
 
@@ -19,7 +19,7 @@ for indexA = 1:length(agentList)
 
    %randomly assign a couple of the initial base layers
    %portfolioSet = createPortfolio([], find(utilityVariables.utilityBaseLayers(currentAgent.matrixLocation,:,1) ~= -9999),utilityVariables.utilityTimeConstraints, utilityVariables.utilityPrereqs, currentAgent.pAddFitElement, currentAgent.training, currentAgent.experience, utilityVariables.utilityAccessCosts, utilityVariables.utilityDuration, currentAgent.numPeriodsEvaluate, selectable, utilityVariables.utilityHistory(1,:,:), currentAgent.wealth, currentAgent.pBackCast, utilityVariables.utilityAccessCodesMat);
-   portfolioSet = createPortfolio([], find(selectable),utilityVariables.utilityTimeConstraints, utilityVariables.utilityPrereqs, currentAgent.pAddFitElement, currentAgent.training, currentAgent.experience, utilityVariables.utilityAccessCosts, utilityVariables.utilityDuration, currentAgent.numPeriodsEvaluate, selectable, utilityVariables.utilityHistory(1,:,:), currentAgent.wealth, currentAgent.pBackCast, utilityVariables.utilityAccessCodesMat);
+   portfolioSet = createPortfolio([], find(selectable),utilityVariables.utilityTimeConstraints, utilityVariables.utilityPrereqs, currentAgent.pAddFitElement, currentAgent.training, currentAgent.experience, utilityVariables.utilityAccessCosts, utilityVariables.utilityDuration, currentAgent.numPeriodsEvaluate, selectable, utilityVariables.utilityHistory(1,:,:), currentAgent.wealth, currentAgent.pBackCast, utilityVariables.utilityAccessCodesMat, modelParameters);
 
    currentAgent.currentPortfolio = logical(portfolioSet(1,1:size(utilityVariables.utilityHistory,2)));
    if portfolioSet(end,end) == 0

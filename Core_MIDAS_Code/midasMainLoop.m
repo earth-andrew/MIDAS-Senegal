@@ -1,6 +1,8 @@
 function [outputs] = midasMainLoop(inputs, runName)
 %runMigrationModel.m main time loop of migration model
 
+% FIX agent WEALTH HISTORY TO 1-DIMENSIONAL ARRAY
+
 
 close all;
 
@@ -8,7 +10,6 @@ tic;
 
 outputs = [];
 [agentParameters, modelParameters, networkParameters, mapParameters] = readParameters(inputs);
-
 [agentList, aliveList, modelParameters, agentParameters, mapParameters, utilityVariables, mapVariables, demographicVariables] = buildWorld(modelParameters, mapParameters, agentParameters, networkParameters);
     
 numLocations = size(mapVariables.locations,1);
@@ -27,6 +28,7 @@ migrationMatrix = zeros(numLocations,numLocations,modelParameters.timeSteps);
 portfolioHistory = cell(numLocations, modelParameters.timeSteps);
 trappedHistory = zeros(length(agentList),modelParameters.timeSteps);
 aspirationHistory = zeros(numLayers, modelParameters.timeSteps);
+%wealthHistory = zeros(modelParameters.numAgents,modelParameters.timeSteps);
 
 %create a list of shared layers, for use in choosing new link
 agentLayers = zeros(length(agentList),size(utilityVariables.utilityLayerFunctions,1));
@@ -332,6 +334,7 @@ for indexT = 1:modelParameters.timeSteps
                 end
             end
             currentAgent.wealth = currentAgent.wealth + newIncome - sum(actualPayments);
+            currentAgent.wealthHistory{indexT} = currentAgent.wealth;
         end
     end %if (mod(indexT, modelParameters.incomeInterval) == 0)
     
@@ -359,10 +362,10 @@ for indexT = 1:modelParameters.timeSteps
 
     end
     
-%     averageWealth(indexT) = mean([livingAgents(:).wealth]);
-%     temp = reshape(cell2mat({livingAgents.expectedProbOpening}), size(livingAgents(1).expectedProbOpening, 1), size(livingAgents(1).expectedProbOpening,2), length(livingAgents));
-%     averageExpectedOpening(:,:,indexT) = mean(temp,3);
-%     clear temp;
+    averageWealth(indexT) = mean([livingAgents(:).wealth],'omitnan');
+    temp = reshape(cell2mat({livingAgents.expectedProbOpening}), size(livingAgents(1).expectedProbOpening, 1), size(livingAgents(1).expectedProbOpening,2), length(livingAgents));
+    averageExpectedOpening(:,:,indexT) = mean(temp,3);
+    clear temp;
 
     %%%%
     %averageExpectedOpening(:,:,indexT) = 0;
@@ -419,6 +422,7 @@ agentSummary.rValue = [agentList(:).rValue]';
 agentSummary.bList = [agentList(:).bList]';
 agentSummary.TOD = [agentList(:).TOD]';
 agentSummary.trapped = [agentList(:).trapped]';
+%agentSummary.wealthHistory = [agentList(:).wealthHistory]';
 
 
 
@@ -426,6 +430,7 @@ tempCurrentPortfolio = cell(length(agentList),1);
 tempFirstPortfolio = cell(length(agentList),1);
 tempPortfolioHistory = cell(length(agentList),1);
 tempAspirationHistory = cell(length(agentList),1);
+tempWealthHistory = cell(length(agentList),1);
 tempNetwork = cell(length(agentList),1);
 tempMove = cell(length(agentList),1);
 tempAccess = cell(length(agentList),1);
@@ -441,6 +446,7 @@ for indexI = 1:length(agentList)
     tempConsideredHistory{indexI} = agentList(indexI).consideredHistory;
     tempTraining{indexI} = agentList(indexI).training;
     tempExperience{indexI} = agentList(indexI).experience;
+    tempWealthHistory{indexI} = agentList(indexI).wealthHistory;
     try
     tempNetwork{indexI} = [agentList(indexI).network(:).id];
     catch
@@ -459,6 +465,7 @@ agentSummary.moveHistory = tempMove;
 agentSummary.accessCodes = tempAccess;
 agentSummary.training = tempTraining;
 agentSummary.experience = tempExperience;
+agentSummary.wealthHistory = tempWealthHistory;
 
 outputs.agentSummary = agentSummary;
 

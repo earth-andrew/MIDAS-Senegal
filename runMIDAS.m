@@ -1,16 +1,16 @@
-function mcScriptRun()
+function mcScriptRun()  
 
 clear functions
 clear classes
 
 addpath('./Core_MIDAS_Code');
 addpath('./Application_Specific_MIDAS_Code');
-addpath('./Override_Core_MIDAS_Code');
+%addpath('./Override_Core_MIDAS_Code');
 
 rng('shuffle');
 
 runName = 'FarmSeasonality';
-series = 'Aspirations_UnitTest_AllPrereqs_Forecasting';
+series = ['Aspirations_SenegalTest_AllPrereqs_Shortterm_t50'];
 saveDirectory = './Outputs/';
 
 input = [];

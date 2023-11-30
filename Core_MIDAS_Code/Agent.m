@@ -8,6 +8,7 @@ classdef Agent < handle
        visX
        visY
        wealth
+       wealthHistory
        realizedUtility
        age
        gender
