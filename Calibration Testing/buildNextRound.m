@@ -42,8 +42,9 @@ collapseColumns = { ...
 
 try
     load evaluationOutputs
+    disp (evaluationOutputs)
 catch
-    fileList = dir('MC*.mat');
+    fileList = dir('MC*.mat')
     
     %inputListRun = {};
     %outputListRun = {};
@@ -51,6 +52,7 @@ catch
     for indexI = 1:length(fileList)
         try
             currentRun = load(fileList(indexI).name);
+            
             fprintf(['Run ' num2str(indexI) ' of ' num2str(length(fileList)) '.\n']);
             
             tempMat = currentRun.output.migrationMatrix;

@@ -69,7 +69,6 @@ bestLocations = sortedIndex(1:min(length(sortedIndex),agent.numBestLocation));
 otherRandomLocations = find(any(agent.knowsIncomeLocation,2));
 randomLocations = otherRandomLocations(randperm(length(otherRandomLocations),min(length(otherRandomLocations),agent.numRandomLocation)));
 locationList = [currentLocation; bestLocations; randomLocations];
-test0 = agent.currentPortfolio;
 
 %remove duplicates
 [bSort,iSort] = sort(locationList);
@@ -346,7 +345,7 @@ for indexL = 1:length(locationList)
                 focalPortfolio = [focalPortfolio agent.numPeriodsEvaluate 1];
             end
             if focalPortfolio(indexK,end) == 1
-                endDuration = (startDuration + focalPortfolio(indexK, end-1) - 1);
+                endDuration = startDuration + focalPortfolio(indexK, end-1) - 1;
 
                 currentPortfolioValue(startDuration:endDuration) = focalPortfolio(indexK,1:end-2) * portfolioData(:,startDuration:endDuration);
                 startDuration = endDuration + 1;
@@ -434,7 +433,6 @@ for indexL = 1:length(locationList)
     portfolioSubSet(exceedsCreditLimit,:) = [];
     portfolioAccessCodes(exceedsCreditLimit) = [];
 
-    test5 = portfolioSubSet;
 
     if(~isempty(portfolioValues))
         agent.trapped = 0;
@@ -462,10 +460,8 @@ for indexL = 1:length(locationList)
     
     end
     agent.bestPortfolioValues(locationList(indexL)) = locationValue(indexL);
-    test4 = agent.bestPortfolioValues;
 end
 agent.consideredPortfolios = consideredPortfolioSet;
-
 
 
 %now identify the best one. 
@@ -542,7 +538,6 @@ else
     agent.currentAspiration = false(1,size(utilityVariables.utilityHistory,2));
 end
 
-test1 = agent.currentPortfolio;
-test2 = agent.currentAspiration;
+
 end
 

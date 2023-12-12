@@ -1,10 +1,10 @@
-load Aspirations_SenegalTest_AllPrereqs_ShortTerm_t500_27-Nov-2023_15-56-20.mat
+load Aspirations_SenegalTest_AllPrereqs_Shortterm0_11-Dec-2023_22-47-43.mat
 shortterm = output;
 
-load Aspirations_SenegalTest_AllPrereqs_Backcasting_t500_27-Nov-2023_16-15-54.mat
+load Aspirations_SenegalTest_AllPrereqs_Backcast0_12-Dec-2023_09-25-48.mat
 backcast = output;
 
-load Aspirations_SenegalTest_AllPrereqs_Forecasting_t500_27-Nov-2023_16-05-31.mat
+load Aspirations_SenegalTest_AllPrereqs_Forecast0_11-Dec-2023_23-33-25.mat
 forecast = output;
 
 
@@ -17,7 +17,7 @@ jobcats = 14;
 seasonalthresh = 4; %Number of periods within which a "seasonal migrant" must migrate and make a return trip
 numAgents = height(scenariolist(1).agentSummary(:,1));
 %Create time vector
-steps = 50;
+steps = 170;
 time = 1:steps;
 
 jobs = zeros(scenarios, jobcats, steps);
@@ -61,6 +61,8 @@ legend({'ShortTerm', 'BackCast', 'Forecast'},'FontSize',14)
 
 %% Plot of Total Population for Given Admin Region, across Scenarios
 regionalPop = zeros(scenarios,locations,steps);
+[sortedAdminUnits, sortedIndex] = sort(scenariolist(1).locations.matrixID);
+placeNames = scenariolist(1).locations.source_ADM2_FR(sortedIndex)';
 
 for indexK = 1:scenarios
     for indexA = 1:locations
@@ -70,7 +72,7 @@ for indexK = 1:scenarios
     end
 end
 
-indexA = 1;
+indexA = 7;
 
 X = 1:steps;
 Y = regionalPop(:,indexA,:);
@@ -83,17 +85,22 @@ end
 hold off
 ax = gca;
 ax.FontSize = 16;
-ylabel('Population in ','FontSize',16)
+ylabel(['Population in ' placeNames(indexA)],'FontSize',16)
 xlabel('Time Steps', 'FontSize',16)
 legend({'ShortTerm', 'BackCast', 'Forecast'},'FontSize',14)
 
 %% Plot of Average Wealth over Time
+
 scenIndex = 2;
 X = 1:steps;
 lag = 4; %number of periods over which to average acrosss time
-avgWealth = scenariolist(scenIndex).averageWealth;
 
-Y = movavg(avgWealth, 'simple', lag);
+Y = []
+for indexK = 1:scenarios
+    avgWealth = scenariolist(indexK).averageWealth;
+    movavgWealth = movavg(avgWealth, 'simple', lag);
+    Y = [Y; movavgWealth'];
+end
 
 plot(X,Y,'LineWidth',3)
 
@@ -101,8 +108,10 @@ ax = gca;
 ax.FontSize = 16;
 ylabel('Average Wealth of Community','FontSize',16)
 xlabel('Time', 'FontSize',16)
+legend({'ShortTerm', 'BackCast', 'Forecast'},'FontSize',14)
+
 %% Plot of Individual Agent Wealth over time
-indexA = 1000;
+indexA = 200;
 X = 1:steps;
 Y = cell2mat(output.agentSummary.wealthHistory{indexA});
 
@@ -113,7 +122,10 @@ ylabel('Individual Wealth','FontSize',16)
 xlabel('Time', 'FontSize',16)
 
 %% Inequality Plots - Average of wealth for top and bottom X% at end of spin-up time to end of model time
-percentile = 0.1; %cutoff of top and bottom X
+
+%NOTE - FIGURE OUT HOW TO INCORPORATE REAL TIME TOP X and BOTTOM X %
+%SHOW SPATIALLY VIA GIS
+percentile = 0.2; %cutoff of top and bottom X
 cutoffNumber = floor(percentile * numAgents); %Number of agents in each bin
 spinupTime = 10; %number of periods after which model has been initialized
 wealth = zeros(numAgents,steps);
@@ -127,7 +139,7 @@ for indexA = 1:1:numAgents
         wealth(indexA,indexT) = wealthHistory(:,indexT);
     end
 end
-startingWealth = wealth(:,(spinupTime+1));
+startingWealth  = wealth(:,(spinupTime+1));
 [sortedwealth, sortIndex] = sort(startingWealth,'ascend');
 
 poorestAgents = sortIndex(1:cutoffNumber);
@@ -218,7 +230,7 @@ for indexK = 1:1:scenarios
                 aspirations(indexK,aspIndex,indexI) = aspirations(indexK,aspIndex,indexI) + 1;
         end
     end
-    aspirations(indexK,:,:) = aspirations(indexK,:,:) / numAgents
+    aspirations(indexK,:,:) = aspirations(indexK,:,:) / numAgents;
 end
 %% Plotting Aspirations across Scenarios by Individual Layer
 
@@ -283,10 +295,10 @@ ylabel('Proportion of Agents Migrating','FontSize',16)
 legend({'Short Time Horizon', 'Backcast', 'Forecast'},'FontSize',14)
 
 %% Net Migration by Region over Model Run
-cutoffIndex = 25; %i.e. show top X number of places on plot
+cutoffIndex = 45; %i.e. show top X number of places on plot
 cumulativeInMigration = zeros(locations);
 cumulativeOutMigration = zeros(locations);
-[sortedAdminUnits, sortedIndex] = sort(scenariolist(indexS).locations.source_ADM2_PCODE);
+[sortedAdminUnits, sortedIndex] = sort(scenariolist(indexS).locations.matrixID);
 placeNames = scenariolist(indexS).locations.source_ADM2_FR(sortedIndex)';
 shortPlaceNames = placeNames(1:cutoffIndex);
 
@@ -316,11 +328,11 @@ legend({'Short Time Horizon', 'Backcast', 'Forecast'},'FontSize',14);
 ax = gca;
 
 %% %% Net Proportional Migration by Region over Model Run
-cutoffIndex = 15; %i.e. show top X number of places on plot
+cutoffIndex = 45; %i.e. show top X number of places on plot
 cumulativeInMigration = zeros(locations);
 cumulativeOutMigration = zeros(locations);
 initialPopulation = zeros(locations);
-[sortedAdminUnits, sortedIndex] = sort(scenariolist(indexS).locations.source_ADM2_PCODE);
+[sortedAdminUnits, sortedIndex] = sort(scenariolist(indexS).locations.matrixID);
 placeNames = scenariolist(indexS).locations.source_ADM2_FR(sortedIndex)';
 shortPlaceNames = placeNames(1:cutoffIndex);
 proportionalMigration = zeros(locations);
@@ -344,7 +356,6 @@ for indexS = 2:1:scenarios
 end
 
 bar(X,shortY)
-ax.FontSize = 16;
 xlabel('Admin Regions','FontSize',16)
 ylabel('Proportional Migration (Fraction of Original Population)','FontSize',16)
 legend({'Short Time Horizon', 'Backcast', 'Forecast'},'FontSize',14);

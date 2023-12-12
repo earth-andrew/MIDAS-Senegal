@@ -10,7 +10,7 @@ addpath('./Application_Specific_MIDAS_Code');
 rng('shuffle');
 
 runName = 'FarmSeasonality';
-series = ['Aspirations_SenegalTest_AllPrereqs_Shortterm_t50'];
+series = ['Aspirations_SenegalTest_AllPrereqs_Backcast'];
 saveDirectory = './Outputs/';
 
 input = [];

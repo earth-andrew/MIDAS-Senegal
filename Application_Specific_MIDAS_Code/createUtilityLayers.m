@@ -67,6 +67,7 @@ for indexI = 1:(size(utility_layers,2))  %6  incomesources * rural/urban categor
     utilityLayerFunctions{indexI,1} = @(k,m,nExpected,n_actual, base) base * (m * nExpected) / (max(0, n_actual - m * nExpected) * k + m * nExpected);   %some income layer - base layer input times density-dependent extinction
 end
 
+
 %%%%%%%%%%%%%%%%%%%%%%%
 %%utilityHistory
 %%%%%%%%%%%%%%%%%%%%%%%
@@ -171,6 +172,9 @@ utilityBaseLayers(:,:,leadTime+1:leadTime+timeSteps) = utilityBaseLayers;
 for indexI = leadTime:-1:1
    utilityBaseLayers(:,:,indexI) = utilityBaseLayers(:,:,indexI+modelParameters.cycleLength); 
 end
+
+%Converting any NaN's to 0
+utilityBaseLayers(isnan(utilityBaseLayers)) = 0;
 
 %%%%%%%%%%%%%%%%%%%%%%%
 %%utilityAccessCosts and utilityAccessCodesMat
