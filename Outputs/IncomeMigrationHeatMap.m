@@ -1,4 +1,4 @@
-load Aspirations_SenegalTest_AllPrereqs_Backcast_t500_11-Dec-2023_15-49-27.mat
+load Aspirations_SenegalTest_AllPrereqs_Backcast0_12-Dec-2023_09-25-48.mat
 backcast = output;
 
 load '../Data/SenegalIncomeData.mat'
@@ -9,7 +9,7 @@ X = income.rural_services
 
 Y = output.countAgentsPerLayer(:,8,end)
 
-plot(X,Y,'LineWidth',3)
+scatter(X,Y)
 ax = gca;
 ax.FontSize = 16;
 ylabel('Number Agents','FontSize',16)

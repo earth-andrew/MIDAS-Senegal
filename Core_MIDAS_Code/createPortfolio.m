@@ -63,9 +63,10 @@ accumulatingDuration = 0; %initialize time for an accumulating portfolio (i.e. t
 [i,j,s] = find(prereqs); %Indices of layers that are prerequisites, where j are requirements
 portfolioSets = [];
 medTermFlag = false; %Flag to indicate if we need to create medium term portfolios
-
+test0 = layers
 %TEST - CHECK IF THIS IS GIVING DIFFERENT RESULTS
 layers = 1:size(constraints,1);
+test1 = layers
 
 %First check if portfolio is specified. If not, create one at random (original code)
 if isempty(portfolio)
