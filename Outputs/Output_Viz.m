@@ -1,14 +1,14 @@
-load Aspirations_SenegalTest_AllPrereqs_Shortterm0_11-Dec-2023_22-47-43.mat
+load Aspirations_SenegalTest_AllPrereqs_Backcastt50_fullLivelihoods0_16-Jan-2024_13-58-27.mat
 shortterm = output;
 
-load Aspirations_SenegalTest_AllPrereqs_Backcast0_12-Dec-2023_09-25-48.mat
+load Aspirations_SenegalTest_AllPrereqs_Backcastt500_16-Jan-2024_13-46-54.mat
 backcast = output;
 
-load Aspirations_SenegalTest_AllPrereqs_Forecast0_11-Dec-2023_23-33-25.mat
-forecast = output;
+%load Aspirations_SenegalTest_AllPrereqs_Forecast0_11-Dec-2023_23-33-25.mat
+%forecast = output;
 
 
-scenariolist = [shortterm, backcast, forecast];
+scenariolist = [shortterm, backcast];
 %scenariolist = shortterm;
 scenarios= length(scenariolist);
 locations = 45;
@@ -17,7 +17,7 @@ jobcats = 14;
 seasonalthresh = 4; %Number of periods within which a "seasonal migrant" must migrate and make a return trip
 numAgents = height(scenariolist(1).agentSummary(:,1));
 %Create time vector
-steps = 170;
+steps = 50;
 time = 1:steps;
 
 jobs = zeros(scenarios, jobcats, steps);

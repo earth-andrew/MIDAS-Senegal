@@ -105,8 +105,11 @@ catch
             popInOut_r2 = weightedPearson(inOutRun(:), inOutData(:), sourcePopWeights(:));
             
             %runLevel
-            test1 = [currentRun.input.parameterValues]'
-            currentInputRun = array2table([currentRun.input.parameterValues]','VariableNames',strrep({currentRun.input.parameterNames{:}},'.',''))
+            test1 = currentRun.input.parameterValues
+            test3 = {currentRun.input.parameterNames}'
+            currentInputRun = array2table([currentRun.input.parameterValues]','VariableNames',{currentRun.input.parameterNames}')
+
+            %currentInputRun = array2table([currentRun.input.parameterValues]','VariableNames',strrep({currentRun.input.parameterNames},'.',''))
 
             currentOutputRun = table(fracMigsError,sourceWeightFracMigsError, destWeightFracMigsError, jointWeightFracMigsError, ...
                 migRateError,sourceWeightMigRateError, destWeightMigRateError, jointWeightMigRateError, ...
@@ -119,7 +122,7 @@ catch
                 'migRate_r2', 'sourceMigRate_r2', 'destMigRate_r2', 'jointMigRate_r2', ...
                 'inOutError','popWeightInOutError','inOutError_r2','popInOut_r2'});
             inputListRun(indexI,:) = currentInputRun;
-            outputListRun(indexI,:) = currentOutputRun;
+            outputListRun(indexI,:) = currentOutputRun
         catch
             skip(indexI) = true;
         end
@@ -132,7 +135,7 @@ catch
     fileList(skip) = [];
     
 end
-%save evaluationOutputs inputListRun outputListRun fileList
+save evaluationOutputs inputListRun outputListRun fileList
 
 minR2 = quantile(outputListRun.jointFracMigs_r2,[1 - quantileMarker]);
 bestInputs = inputListRun(outputListRun.jointFracMigs_r2 >= minR2,:);

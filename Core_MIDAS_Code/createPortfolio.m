@@ -1,8 +1,6 @@
 function [portfolioSets] = createPortfolio(portfolio, layers, constraints, prereqs,pAdd, agentTraining, agentExperience, utilityCosts, utilityDuration, numPeriodsEvaluate, selectable, currentUtilities, agentWealth, pBackCast, accesscodes, modelParameters)
 %createPortfolio draws a random portfolio of utility layers that fit the current time constraint
 
-%NOTE - MAKE FUNCTION FOR TIME USE AND APPLY TO FORECASTING
-
 %Steps:
 %1. If a portfolio is not specified as part of argument, create one at
 %random. This is done in one of two ways: backcasting (selecting portfolio
@@ -49,11 +47,6 @@ function [portfolioSets] = createPortfolio(portfolio, layers, constraints, prere
 %5. Return portfolio layers, duration, and aspiration flag
 
 
-%To-DO:
-%1) Figure out whether to account for income constraints in both
-%backcasting and forecasting
-%2) Figure out how to add an intermediate portfolio
-
 %start with all the time in the world
 timeRemaining = ones(1, size(constraints,2)-1);  %will be as long as the cycle defined for layers
 aspiration = false(1,size(constraints,1)); %Initialize blank column array of aspirations
@@ -63,10 +56,6 @@ accumulatingDuration = 0; %initialize time for an accumulating portfolio (i.e. t
 [i,j,s] = find(prereqs); %Indices of layers that are prerequisites, where j are requirements
 portfolioSets = [];
 medTermFlag = false; %Flag to indicate if we need to create medium term portfolios
-test0 = layers
-%TEST - CHECK IF THIS IS GIVING DIFFERENT RESULTS
-layers = 1:size(constraints,1);
-test1 = layers
 
 %First check if portfolio is specified. If not, create one at random (original code)
 if isempty(portfolio)
