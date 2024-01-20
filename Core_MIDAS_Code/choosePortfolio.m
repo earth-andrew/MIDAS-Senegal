@@ -333,7 +333,7 @@ for indexL = 1:length(locationList)
         
         %Cycle through near-term, mid-term, and aspirational "chunks" in portfolio
         currentPortfolioValue = zeros(agent.numPeriodsEvaluate,1);%Get full portfolio set based on sorted portfolioSubSets that are retained
-        focalPortfolio = portfolioSubSet{indexP}; 
+        focalPortfolio = portfolioSubSet{indexP};
         startDuration = 1;
         for indexK = 1:size(focalPortfolio,1)
 

@@ -16,8 +16,6 @@ function [ currentAgent] = trainingTracker(currentAgent, utilityVariables, model
 %portions of currentPortfolio and other bestPortfolios based on extra
 %period of training.
 
-%NEXT STEP - FIGURE OUT HOW TO INCORPORATE OTHER BEST PORTFOLIOS
-
 [i,j,s] = find(utilityVariables.utilityPrereqs);
 
 %Set Locations for identifying set of best portfolios that are stored
@@ -59,12 +57,10 @@ else
         %aspiration
         prereqs = j(i==currentAspiration);
         prereqs(prereqs == currentAspiration) = [];
-
         %Figure out time left on any prereqs
         if any(prereqs)
             currentAgent.currentPortfolio(1,[prereqs']) = true;
-            test4 = currentAgent.currentPortfolio;
-            timeToTraining = max(utilityVariables.utilityDuration(prereqs) - currentAgent.experience(prereqs));
+            timeToTraining = max(utilityVariables.utilityDuration(prereqs,1) - currentAgent.experience(prereqs));
         else
             timeToTraining = 0;
         end
@@ -123,8 +119,7 @@ if ~isempty(bestLocations)
                     %Figure out time left on any prereqs
                     if any(prereqs)
                         currentAgent.bestPortfolios{locationIndex}(1,[prereqs']) = true;
-                        test5 = currentAgent.bestPortfolios{locationIndex};
-                        timeToTraining = max(utilityVariables.utilityDuration(prereqs) - currentAgent.experience(prereqs));
+                        timeToTraining = max(utilityVariables.utilityDuration(prereqs,1) - currentAgent.experience(prereqs));
                     else
                         timeToTraining = 0;
                     end

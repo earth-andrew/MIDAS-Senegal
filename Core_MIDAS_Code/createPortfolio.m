@@ -112,7 +112,7 @@ if isempty(portfolio)
 
             %Select one aspiration at random
             if length(indAspiration) > 1
-                indAspiration = randsample(indAspiration,1);
+                indAspiration = datasample(indAspiration,1);
             end
             aspiration(1,indAspiration) = true;
             
@@ -120,9 +120,10 @@ if isempty(portfolio)
             %Add a selectable prereq to portfolio    
             portfolioPrereqs = j(i==indAspiration);
             portfolioPrereqs(portfolioPrereqs == indAspiration) = []; %remove own layer from aspiration's prereqs
+            
             %Check if any prereqs and pick one at random to add
             if any(selectable(portfolioPrereqs))
-                indPrereq = randsample(portfolioPrereqs,1);
+                indPrereq = datasample(portfolioPrereqs,1);
 
                 samplePortfolio(indPrereq) = true;
                 duration = min(max(utilityDuration(indPrereq,1) - agentExperience(indPrereq,1),0),min(utilityDuration(samplePortfolio,2) - agentTraining(samplePortfolio))); %Minimum time durations for pre-reqs, accounting for any experience already accumulated. Note that some layers can be prereqs even if sufficient training is amassed (due to costs), hence max of training needed and 0
@@ -131,12 +132,12 @@ if isempty(portfolio)
             
             %If time is exceeded, remove layers one by one    
             timeRemaining = 1 - sum(constraints(samplePortfolio,2:end),1); 
-            %testb = samplePortfolio
+
             while any(sum(timeRemaining,1) < 0)  
                 tempLayers = find(samplePortfolio);
                 tempLayers(ismember(tempLayers,portfolioPrereqs)) = [];
                 if length(tempLayers) > 1
-                    samplePortfolio(randsample(tempLayers,1)) = false;
+                    samplePortfolio(datasample(tempLayers,1)) = false;
                 else
                     samplePortfolio(tempLayers) = false;
                 end
@@ -149,7 +150,7 @@ if isempty(portfolio)
             while sum(timeRemaining) > 0 && any(selectableLayers)
                 tempLayers = find(selectableLayers,1);
                 if length(tempLayers) > 1
-                    indexS = randsample(tempLayers,1); 
+                    indexS = datasample(tempLayers,1); 
                 else
                     indexS = tempLayers;
                 end
@@ -161,6 +162,7 @@ if isempty(portfolio)
                 selectableLayers(indexS) = false;    
             end
         end
+
         %Now, figure out duration, based on time needed to get sufficiently trained
         if any(portfolioPrereqs) & (duration < numPeriodsEvaluate)
             highfidelityDuration = min(duration, min(utilityDuration(samplePortfolio,2) - agentTraining(samplePortfolio)));
@@ -202,7 +204,7 @@ if isempty(portfolio)
             %Re-iterate to identify any additional selectable layers that agent can deploy
 
             while sum(timeRemaining) > 0 && any(selectableLayers)    
-                indexS = randsample(find(selectableLayers,1),1);    
+                indexS = datasample(find(selectableLayers,1),1);    
                 tempPortfolio(indexS) = true; 
                 timeUse = timeCalc(constraints, tempPortfolio, modelParameters);
                 timeRemaining = 1 - timeUse;    
