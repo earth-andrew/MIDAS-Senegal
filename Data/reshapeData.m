@@ -5,9 +5,17 @@ function [] = reshapeData()
 %layer in a specified location.
 
 %rawData = load([modelParameters.utilityDataPath '/epred_sum.csv']);
-rawData = readtable('./epred_sum.csv');
-medianValues = rawData(:,{'sector', 'urban', 'admin', 'pred_med'})
-ruralUrbanTable = unstack(medianValues,'pred_med','urban')
+%rawData = readtable('./epred_sum.csv');
+rawData = readtable('epred_extract_100.csv');
+
+
+%Pick random number from 1 to 100 for draw
+draw = randi(100);
+
+%medianValues = rawData(:,{'sector', 'urban', 'admin', 'pred_med'})
+medianValues = rawData(:,{'sector', 'urban', 'admin', ['draw_' num2str(draw)]});
+
+ruralUrbanTable = unstack(medianValues,['draw_' num2str(draw)],'urban');
 sectorTable = unstack(ruralUrbanTable, {'rural','urban'}, 'sector');
 
 sectorTable = sortrows(sectorTable,'admin','ascend');

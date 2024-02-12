@@ -110,7 +110,7 @@ consideredPortfolioSet = []; %List of portfolios considered by agent across all 
 
 %Update agent pre-requisites, with special function for education (to
 %account for minimum number of years needed)
-agent = trainingTracker(agent, utilityVariables, modelParameters);
+[agent, backCastCount] = trainingTracker(agent, utilityVariables, modelParameters, backCastCount);
 
 %Check which layers are "selectable" based on agent prereqs
 selectable = selectableFlag(utilityVariables.utilityPrereqs, utilityVariables.utilityAccessCodesMat, utilityVariables.utilityAccessCosts, agent.training, agent.experience, agent.currentPortfolio, agent.wealth, utilityVariables.utilityDuration(:,2));

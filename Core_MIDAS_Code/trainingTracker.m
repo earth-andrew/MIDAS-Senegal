@@ -1,4 +1,4 @@
-function [ currentAgent] = trainingTracker(currentAgent, utilityVariables, modelParameters)
+function [ currentAgent, backCastNum] = trainingTracker(currentAgent, utilityVariables, modelParameters, backCastNum)
 %This function tracks how many periods of "training" an agent has received in
 %any given layer. To make this generalizable, we track the periods of
 %experience in each layer, even though not all layers may have formal
@@ -48,7 +48,7 @@ currentAgent.training(newCerts) = true;
 selectableLayers = selectableFlag(utilityVariables.utilityPrereqs, utilityVariables.utilityAccessCodesMat, utilityVariables.utilityAccessCosts, currentAgent.training, currentAgent.experience, [], [], utilityVariables.utilityDuration(:,2));
 
 if any(selectableLayers' & currentAgent.currentAspiration)
-    currentAgent.currentPortfolio = createPortfolio(currentAgent.currentAspiration, [],utilityVariables.utilityTimeConstraints, utilityVariables.utilityPrereqs, currentAgent.pAddFitElement, currentAgent.training, currentAgent.experience, utilityVariables.utilityAccessCosts, utilityVariables.utilityDuration, currentAgent.numPeriodsEvaluate, selectableLayers, [], currentAgent.wealth, currentAgent.pBackCast, utilityVariables.utilityAccessCodesMat, modelParameters);
+    [currentAgent.currentPortfolio, backCastNum] = createPortfolio(currentAgent.currentAspiration, [],utilityVariables.utilityTimeConstraints, utilityVariables.utilityPrereqs, currentAgent.pAddFitElement, currentAgent.training, currentAgent.experience, utilityVariables.utilityAccessCosts, utilityVariables.utilityDuration, currentAgent.numPeriodsEvaluate, selectableLayers, [], currentAgent.wealth, backCastNum, utilityVariables.utilityAccessCodesMat, modelParameters);
 %Adjust time of high-fidelity duration if new experience helps fulfill prereq
 else
     %Ensure portfolio is not empty
@@ -106,7 +106,7 @@ if ~isempty(bestLocations)
             indAspiration = find(focalAspiration);
 
             if any(selectableLayers' & focalAspiration)
-                currentAgent.bestPortfolios{locationIndex} = createPortfolio(focalAspiration, [],utilityVariables.utilityTimeConstraints, utilityVariables.utilityPrereqs, currentAgent.pAddFitElement, currentAgent.training, currentAgent.experience, utilityVariables.utilityAccessCosts, utilityVariables.utilityDuration, currentAgent.numPeriodsEvaluate, selectableLayers, [], currentAgent.wealth, currentAgent.pBackCast, utilityVariables.utilityAccessCodesMat, modelParameters);
+                [currentAgent.bestPortfolios{locationIndex}, backCastNum] = createPortfolio(focalAspiration, [],utilityVariables.utilityTimeConstraints, utilityVariables.utilityPrereqs, currentAgent.pAddFitElement, currentAgent.training, currentAgent.experience, utilityVariables.utilityAccessCosts, utilityVariables.utilityDuration, currentAgent.numPeriodsEvaluate, selectableLayers, [], currentAgent.wealth, backCastNum, utilityVariables.utilityAccessCodesMat, modelParameters);
                 %Adjust time of high-fidelity duration if new experience helps fulfill prereq
             else
                 %Ensure portfolio is not empty
