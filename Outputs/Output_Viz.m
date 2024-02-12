@@ -1,15 +1,15 @@
-load Aspirations_SenegalTest_AllPrereqs_Backcastt50_fullLivelihoods0_16-Jan-2024_13-58-27.mat
-shortterm = output;
+load Aspirations_SenegalTest_BackCastFlagTest0_12-Feb-2024_14-49-53.mat
+migCalibration = output;
 
-load Aspirations_SenegalTest_AllPrereqs_Backcastt500_16-Jan-2024_13-46-54.mat
-backcast = output;
+%load Aspirations_SenegalTest_R1JobsCalibration0_07-Feb-2024_23-52-58.mat
+%jobCalibration = output;
 
 %load Aspirations_SenegalTest_AllPrereqs_Forecast0_11-Dec-2023_23-33-25.mat
 %forecast = output;
 
 
-scenariolist = [shortterm, backcast];
-%scenariolist = shortterm;
+%scenariolist = [shortterm, backcast];
+scenariolist = [migCalibration];
 scenarios= length(scenariolist);
 locations = 45;
 
@@ -17,7 +17,7 @@ jobcats = 14;
 seasonalthresh = 4; %Number of periods within which a "seasonal migrant" must migrate and make a return trip
 numAgents = height(scenariolist(1).agentSummary(:,1));
 %Create time vector
-steps = 50;
+steps = size(scenariolist(1).countAgentsPerLayer,3);
 time = 1:steps;
 
 jobs = zeros(scenarios, jobcats, steps);
@@ -51,13 +51,16 @@ hold on
 %end
 %hold off
 %hold on
+
 bar(X,Y,1.0)
 hold off
 ax = gca;
 ax.FontSize = 16;
 ylabel('Proportion of Agents','FontSize',16)
 xlabel('Income Layers', 'FontSize',16)
-legend({'ShortTerm', 'BackCast', 'Forecast'},'FontSize',14)
+%legend({'ShortTerm', 'BackCast', 'Forecast'},'FontSize',14)
+legend({'Migration Calibration'}, 'FontSize',14)
+
 
 %% Plot of Total Population for Given Admin Region, across Scenarios
 regionalPop = zeros(scenarios,locations,steps);
@@ -87,11 +90,11 @@ ax = gca;
 ax.FontSize = 16;
 ylabel(['Population in ' placeNames(indexA)],'FontSize',16)
 xlabel('Time Steps', 'FontSize',16)
-legend({'ShortTerm', 'BackCast', 'Forecast'},'FontSize',14)
+legend({'Migration Calibration', 'Job Calibration'},'FontSize',14)
 
 %% Plot of Average Wealth over Time
 
-scenIndex = 2;
+scenIndex = 1;
 X = 1:steps;
 lag = 4; %number of periods over which to average acrosss time
 
@@ -108,7 +111,9 @@ ax = gca;
 ax.FontSize = 16;
 ylabel('Average Wealth of Community','FontSize',16)
 xlabel('Time', 'FontSize',16)
-legend({'ShortTerm', 'BackCast', 'Forecast'},'FontSize',14)
+%legend({'ShortTerm', 'BackCast', 'Forecast'},'FontSize',14)
+legend({'Base Case'},'FontSize',14)
+
 
 %% Plot of Individual Agent Wealth over time
 indexA = 200;
@@ -292,7 +297,7 @@ ax = gca;
 ax.FontSize = 16;
 xlabel('Time','FontSize',16)
 ylabel('Proportion of Agents Migrating','FontSize',16)
-legend({'Short Time Horizon', 'Backcast', 'Forecast'},'FontSize',14)
+legend({'Migration Calibration', 'Job Calibration'},'FontSize',14)
 
 %% Net Migration by Region over Model Run
 cutoffIndex = 45; %i.e. show top X number of places on plot
@@ -317,14 +322,14 @@ for indexS = 2:1:scenarios
     cumulativeOutMigration = sum(scenariolist(indexS).outMigrations,2);
     netMigration = cumulativeInMigration - cumulativeOutMigration;
     Y = [Y; netMigration'];
-    shortY = [shortY; netMigration(1:cutoffIndex)']
+    shortY = [shortY; netMigration(1:cutoffIndex)'];
 end
 
 bar(X,shortY)
 ax.FontSize = 16;
 xlabel('Admin Regions','FontSize',16)
 ylabel('Net Migration (persons)','FontSize',16)
-legend({'Short Time Horizon', 'Backcast', 'Forecast'},'FontSize',14);
+legend({'Migration Calibration', 'Job Calibration'},'FontSize',14);
 ax = gca;
 
 %% %% Net Proportional Migration by Region over Model Run
@@ -358,7 +363,7 @@ end
 bar(X,shortY)
 xlabel('Admin Regions','FontSize',16)
 ylabel('Proportional Migration (Fraction of Original Population)','FontSize',16)
-legend({'Short Time Horizon', 'Backcast', 'Forecast'},'FontSize',14);
+legend({'Migration Calibration', 'Job Calibration'},'FontSize',14);
 ax = gca;
 
 
@@ -401,8 +406,8 @@ end
 
 
 %Bar Graph of seasonal migrants
-X = categorical({'Short Time Horizon', 'Forecast', 'BackCast'});
-X = reordercats(X, {'Short Time Horizon', 'Forecast', 'BackCast'});
+X = categorical({'Migration Calibration', 'Job Calibration'});
+X = reordercats(X, {'Migration Calibration', 'Job Calibration'});
 Y = cyclicalmigration;
 bar(X,Y)
 ax = gca;
@@ -429,7 +434,7 @@ ax = gca;
 ax.FontSize = 16;
 xlabel('Time','FontSize',16)
 ylabel('Proportion Agents with Unmet Aspirations' ,'FontSize',16)
-legend({'Short Term', 'Backcast', 'Forecast'},'FontSize',14)
+legend({'Job Calibratoin', 'Migration Aspiration'},'FontSize',14)
 
 %% Aspirations by Time
 indexA = 3; %Income Layer for Focal Aspiration

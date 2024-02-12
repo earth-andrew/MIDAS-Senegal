@@ -42,6 +42,7 @@ classdef Agent < handle
        firstPortfolio
        agentPortfolioHistory
        agentAspirationHistory
+       backCastProportion
        personalIncomeHistory
        currentSharedIn
        lastIntendedShareIn

@@ -21,7 +21,7 @@ jointPopSum = sum(sum(jointPopWeights));
 fracMigsData = migrationData / sum(sum(migrationData));
 
 %another is the migs per total population
-migRateData = migrationData / sum(popData);
+migRateData = migrationData / sum(popData)
 
 %and another is the in/out ratio
 inOutData = sum(migrationData) ./ (sum(migrationData'))';
@@ -44,10 +44,10 @@ try
     load evaluationOutputs
     disp (evaluationOutputs)
 catch
-    fileList = dir('SenegalTest_CalibrationExperimentHPC*.mat');
+    fileList = dir('SenegalTest_CalibrationExperiment_*.mat');
     
-    %inputListRun = {};
-    %outputListRun = {};
+    inputListRun = [];
+    outputListRun = [];
     skip = false(length(fileList),1);
     for indexI = 1:length(fileList)
         try
@@ -105,9 +105,7 @@ catch
             popInOut_r2 = weightedPearson(inOutRun(:), inOutData(:), sourcePopWeights(:));
             
             %runLevel
-            test1 = currentRun.input.parameterValues
-            test3 = {currentRun.input.parameterNames}'
-            currentInputRun = array2table([currentRun.input.parameterValues]','VariableNames',{currentRun.input.parameterNames}')
+            currentInputRun = array2table([currentRun.input.parameterValues]','VariableNames',currentRun.input.parameterNames');
 
             %currentInputRun = array2table([currentRun.input.parameterValues]','VariableNames',strrep({currentRun.input.parameterNames},'.',''))
 
@@ -121,8 +119,10 @@ catch
                 'fracMigs_r2', 'sourceFracMigs_r2', 'destFracMigs_r2', 'jointFracMigs_r2', ...
                 'migRate_r2', 'sourceMigRate_r2', 'destMigRate_r2', 'jointMigRate_r2', ...
                 'inOutError','popWeightInOutError','inOutError_r2','popInOut_r2'});
-            inputListRun(indexI,:) = currentInputRun;
-            outputListRun(indexI,:) = currentOutputRun
+            inputListRun = [inputListRun; currentInputRun];
+            outputListRun = [outputListRun; currentOutputRun];
+            %inputListRun(indexI,:) = currentInputRun
+            %outputListRun(indexI,:) = currentOutputRun
         catch
             skip(indexI) = true;
         end
@@ -145,13 +145,13 @@ load(expList(1).name);
 
 
 for indexI = 1:height(mcParams)
-    tempIndex = strmatch(strrep(mcParams.Name{indexI},'.',''),inputListRun.Properties.VariableNames);
+    %tempIndex = strmatch(strrep(mcParams.Name{indexI},'.',''),inputListRun.Properties.VariableNames)
+    tempIndex = strcmp(mcParams.Name{indexI},inputListRun.Properties.VariableNames);
     mcParams.Lower(indexI) = min(table2array(bestInputs(:,tempIndex)));
     mcParams.Upper(indexI) = max(table2array(bestInputs(:,tempIndex)));
 end
 
 save updatedMCParams mcParams;
-
 
 
 end
@@ -187,5 +187,5 @@ temp = ylabel('ORIGIN','FontSize',16,'Position',[-5 30]);
 xlabel('DESTINATION','FontSize',16);
 %set(temp,'Position', [-.1 .5 0]);
 set(gcf,'Position',[100 100 600 500]);
-
+savefig('MigrationCalibration.png')
 end

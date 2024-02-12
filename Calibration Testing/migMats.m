@@ -1,6 +1,6 @@
 clear all;
 
-migData = readtable("ipumsi_00001.csv");
+migData = readtable("senegal2013CensusExtract.csv");
 
 close all;
 
@@ -12,7 +12,7 @@ ageClasses = [14 24 39 54 69 84 99];
 
 [b,i,sex] = unique(migData.sex); %female is 1; male is 2
 % [b_geo2,i,rec_geo2] = unique(migData.geo2_sn2013); %department living
-[b_geo1,i,rec_geo1] = unique(migData.geo1_sn); %region living
+[b_geo1,i,rec_geo1] = unique(migData.geo1_sn2013); %region living
 
 % [b_send_geo2_1,i,mig1_geo2] = unique(migData.mig2_1_sn); %department living 1 year ago
 [b_send_geo1_1,i,mig1_geo1] = unique(migData.mig1_1_sn); %region living 1 year ago
@@ -89,4 +89,4 @@ title('10-year migration by grouped regions (fraction of total population)');
 colorbar;
 print('-dpng','-painters','-r150','mig_10yr.png');
 
-save migData_census2013 popData mig_*;
+save migData_census2013_ncl popData mig_*;

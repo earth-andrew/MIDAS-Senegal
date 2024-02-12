@@ -58,6 +58,10 @@ function [ agent, moved ] = choosePortfolio( agent, utilityVariables, currentT, 
 %as of now, the agent has not decided to move
 moved = [];
 
+%Set backCasted and Total Portfolios Created to 0 for this agent
+backCastCount = 0; %Number of portfolios that are evaluated via backCast mechanism (i.e. first identify an aspiration, then build towards it)
+totalPortfoliosCreated = 0; %Number of sample portfolios created through createPortfolio for consideration
+
 %choose a set of locations to evaluate - the current location, some other
 %good locations from past searches, and a few random new ones.  note that
 %matrixLocation is the identifier for the location's index in the location
@@ -159,7 +163,8 @@ for indexL = 1:length(locationList)
     %last, come up with a few random portfolios to finish
     for indexP = (currentPortfolio):totalNumPortfolios
 
-        [nextRandom] = createPortfolio([], find(any(agent.knowsIncomeLocation(locationList(indexL),:),1)),utilityVariables.utilityTimeConstraints, utilityVariables.utilityPrereqs, agent.pAddFitElement, agent.training, agent.experience, utilityVariables.utilityAccessCosts, utilityVariables.utilityDuration, agent.numPeriodsEvaluate, selectable, utilityVariables.utilityHistory(indexL,:,currentT-4:currentT-1), agent.wealth, agent.pBackCast, utilityVariables.utilityAccessCodesMat, modelParameters);
+        [nextRandom, backCastCount] = createPortfolio([], find(any(agent.knowsIncomeLocation(locationList(indexL),:),1)),utilityVariables.utilityTimeConstraints, utilityVariables.utilityPrereqs, agent.pAddFitElement, agent.training, agent.experience, utilityVariables.utilityAccessCosts, utilityVariables.utilityDuration, agent.numPeriodsEvaluate, selectable, utilityVariables.utilityHistory(indexL,:,currentT-4:currentT-1), agent.wealth, backCastCount, utilityVariables.utilityAccessCodesMat, modelParameters);
+        totalPortfoliosCreated = totalPortfoliosCreated + 1;
         if(~isempty(nextRandom))
             portfolioSet{indexP} = nextRandom;   
         end
@@ -538,6 +543,8 @@ else
     agent.currentAspiration = false(1,size(utilityVariables.utilityHistory,2));
 end
 
+%Calculate proportion of portfolios generated that were backCasted
+agent.backCastProportion(currentT) = backCastCount / totalPortfoliosCreated;
 
 end
 

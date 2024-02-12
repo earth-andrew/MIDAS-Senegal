@@ -154,6 +154,9 @@ quarterShare = incomeQs ./ (sum(incomeQs,2));
 utilityBaseLayers = ones(height(locations),height(utilityLayerFunctions),timeSteps);
 for indexI = 1:modelParameters.cycleLength:size(utilityBaseLayers,3)
     utilityBaseLayers(:,:,indexI) = utility_layers;
+
+    %Randomize Utilities by Layer
+    %utilityBaseLayers(:,:,indexI) = 1100000 * rand();
 end
 
 for indexI = 1:size(utilityBaseLayers,1)

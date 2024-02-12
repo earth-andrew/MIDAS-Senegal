@@ -1,13 +1,10 @@
-function [portfolioSets] = createPortfolio(portfolio, layers, constraints, prereqs,pAdd, agentTraining, agentExperience, utilityCosts, utilityDuration, numPeriodsEvaluate, selectable, currentUtilities, agentWealth, pBackCast, accesscodes, modelParameters)
+function [portfolioSets, backCastNum] = createPortfolio(portfolio, layers, constraints, prereqs, pAdd, agentTraining, agentExperience, utilityCosts, utilityDuration, numPeriodsEvaluate, selectable, currentUtilities, agentWealth, backCastNum, accesscodes, modelParameters)
 %createPortfolio draws a random portfolio of utility layers that fit the current time constraint
 
 %Steps:
 %1. If a portfolio is not specified as part of argument, create one at
-%random. This is done in one of two ways: backcasting (selecting portfolio
-%layers at random and then filling in any pre-reqs for aspirations) or forecasting
-%(selecting only selectable layers and then seeing what aspirations could
-%be enabled by these). Which of these is followed depends on the parameter
-%pBackCast and a random draw. The output is a n x 3 matrix that tracks
+%random. The next part of the algorithm goes one of two ways: backcasting (if there are randomly-generated portfolio items that are not currently selectable) or forecasting
+%(if all portfolio items are selectable).  In either case, the output is a n x 3 matrix that tracks
 %different stages of portfolios over the evaluation periods. The first row
 %represents the near-term high-fidelity portfolio, last row represents the
 %long-term aspiration, and middle rows represent any intermediate
@@ -60,107 +57,102 @@ medTermFlag = false; %Flag to indicate if we need to create medium term portfoli
 %First check if portfolio is specified. If not, create one at random (original code)
 if isempty(portfolio)
    
-    %initialize an empty portfolio
+    %randomly generate a portfolio
     portfolio = false(1,size(constraints,1));
     
-    %BackCasting process (i.e. see if there are any aspirations then fill
-    %in high-fidelity portion with pre-reqs)
-    if rand() < pBackCast
-        %while we still have time left and layers that fit, OR portfolio is
-        %empty
-        
-        while(sum(timeRemaining) > 0 && ~isempty(layers))
-    
-            %draw one of those layers at random and remove it from the set
-            randomDraw = ceil(rand()*length(layers));
-    
-            nextElement = layers(randomDraw);
-            layers(randomDraw) = [];
+    while(sum(timeRemaining) > 0 && ~isempty(layers))
+        %draw one of those layers at random and remove it from the set
+        randomDraw = ceil(rand()*length(layers));
+        nextElement = layers(randomDraw);
+        layers(randomDraw) = [];
             
-            if(~portfolio(nextElement))  %if this one isn't already in the portfolio (e.g., it got drawn in as a prereq in a previous iteration)
+        if(~portfolio(nextElement))  %if this one isn't already in the portfolio (e.g., it got drawn in as a prereq in a previous iteration)
             %make a temporary portfolio for consideration
+            tempPortfolio = portfolio;
+            tempPortfolio(nextElement) = true;    
+            timeUse = timeCalc(constraints, tempPortfolio, modelParameters);
+            timeExceedance = sum(sum(timeUse > 1)) > 0;
 
-                tempPortfolio = portfolio;
-                tempPortfolio(nextElement) = true;
-                
-                timeUse = timeCalc(constraints, tempPortfolio, modelParameters);
-
-                timeExceedance = sum(sum(timeUse > 1)) > 0;
-
-                %test whether to add it to the portfolio, if it fits
-                if(~timeExceedance && rand() < pAdd)
-                    portfolio = tempPortfolio;
-                    %remove any that are OBVIOUSLY over the limit, though this won't
-                    %catch any that have other time constraints tied to prereqs
-                    timeRemaining = 1 - timeUse;
-                    layers(sum(constraints(layers,2:end) > timeRemaining,2) > 0) = [];
-                end
-            end
-            if ~any(portfolio)
-                disp('Empty portfolio')
+            %test whether to add it to the portfolio, if it fits
+            if(~timeExceedance && rand() < pAdd)
+                portfolio = tempPortfolio;
+                %remove any that are OBVIOUSLY over the limit, though this won't
+                %catch any that have other time constraints tied to prereqs
+                timeRemaining = 1 - timeUse;
+                layers(sum(constraints(layers,2:end) > timeRemaining,2) > 0) = [];
             end
         end
+        
+        if ~any(portfolio)
+            disp('Empty portfolio')
+        end
+    end
 
-        %Now check if portfolio has any aspirational elements
-        samplePortfolio = portfolio';
-        aspirations = samplePortfolio & ~selectable & ~agentTraining;
+    %Now check if portfolio has any non-selectable, aspirational elements 
+    samplePortfolio = portfolio';
+    aspirations = samplePortfolio & ~selectable & ~agentTraining;
     
-        %If any elements are aspirations, pick one at random and figure out prereqs
-        if any(aspirations)
-            indAspiration = find(aspirations);
-            samplePortfolio(aspirations) = false;
+    %If there are non-selectable aspirations, engage in Backcasting
+    if any(aspirations)
+        
+        %Add 1 to the number of backCasted portfolios for this agent. This
+        %is re-set to 0 at the beginning of choosePortfolio.
+        backCastNum = backCastNum + 1;
 
-            %Select one aspiration at random
-            if length(indAspiration) > 1
-                indAspiration = datasample(indAspiration,1);
-            end
-            aspiration(1,indAspiration) = true;
-            
+        %Pick one aspiration at random (in case there are multiple) and figure out prereqs
+        indAspiration = find(aspirations);
+        samplePortfolio(aspirations) = false;
+
+        if length(indAspiration) > 1
+            indAspiration = datasample(indAspiration,1);
+        end
+
+        aspiration(1,indAspiration) = true;
     
-            %Add a selectable prereq to portfolio    
-            portfolioPrereqs = j(i==indAspiration);
-            portfolioPrereqs(portfolioPrereqs == indAspiration) = []; %remove own layer from aspiration's prereqs
+        %Add a selectable prereq to portfolio    
+        portfolioPrereqs = j(i==indAspiration);
+        portfolioPrereqs(portfolioPrereqs == indAspiration) = []; %remove own layer from aspiration's prereqs
             
-            %Check if any prereqs and pick one at random to add
-            if any(selectable(portfolioPrereqs))
-                indPrereq = datasample(portfolioPrereqs,1);
-
-                samplePortfolio(indPrereq) = true;
-                duration = min(max(utilityDuration(indPrereq,1) - agentExperience(indPrereq,1),0),min(utilityDuration(samplePortfolio,2) - agentTraining(samplePortfolio))); %Minimum time durations for pre-reqs, accounting for any experience already accumulated. Note that some layers can be prereqs even if sufficient training is amassed (due to costs), hence max of training needed and 0
-            end
+        %Check if any prereqs and pick one at random to add
+        if any(selectable(portfolioPrereqs))
+            indPrereq = datasample(portfolioPrereqs,1);
+            samplePortfolio(indPrereq) = true;
+            duration = min(max(utilityDuration(indPrereq,1) - agentExperience(indPrereq,1),0),min(utilityDuration(samplePortfolio,2) - agentTraining(samplePortfolio))); %Minimum time durations for pre-reqs, accounting for any experience already accumulated. Note that some layers can be prereqs even if sufficient training is amassed (due to costs), hence max of training needed and 0
+        end
             
+        %If time is exceeded, remove layers one by one    
+        timeRemaining = 1 - sum(constraints(samplePortfolio,2:end),1); 
+
+        while any(sum(timeRemaining,1) < 0)  
+            tempLayers = find(samplePortfolio);
+            tempLayers(ismember(tempLayers,portfolioPrereqs)) = [];
+                
+            if length(tempLayers) > 1
+                samplePortfolio(datasample(tempLayers,1)) = false;
+            else
+                samplePortfolio(tempLayers) = false;
+            end
+                
+            timeUse = timeCalc(constraints, samplePortfolio, modelParameters);
+            timeRemaining = 1 - timeUse;    
+        end
+    
+        %Now, if time still remains and selectable layers are still available, keep filling portfolio        
+        selectableLayers = selectable & ~samplePortfolio;
             
-            %If time is exceeded, remove layers one by one    
-            timeRemaining = 1 - sum(constraints(samplePortfolio,2:end),1); 
-
-            while any(sum(timeRemaining,1) < 0)  
-                tempLayers = find(samplePortfolio);
-                tempLayers(ismember(tempLayers,portfolioPrereqs)) = [];
-                if length(tempLayers) > 1
-                    samplePortfolio(datasample(tempLayers,1)) = false;
-                else
-                    samplePortfolio(tempLayers) = false;
-                end
-                timeUse = timeCalc(constraints, samplePortfolio, modelParameters);
-                timeRemaining = 1 - timeUse;    
+        while sum(timeRemaining) > 0 && any(selectableLayers)    
+            tempLayers = find(selectableLayers,1);
+                
+            if length(tempLayers) > 1    
+                indexS = datasample(tempLayers,1); 
+            else
+                indexS = tempLayers;
             end
-
-            %Now, if time still remains and selectable layers are still available, keep filling portfolio    
-            selectableLayers = selectable & ~samplePortfolio;
-            while sum(timeRemaining) > 0 && any(selectableLayers)
-                tempLayers = find(selectableLayers,1);
-                if length(tempLayers) > 1
-                    indexS = datasample(tempLayers,1); 
-                else
-                    indexS = tempLayers;
-                end
-                samplePortfolio(indexS) = true;    
-  
-                timeUse = timeCalc(constraints, samplePortfolio, modelParameters);              
-                timeRemaining = 1 - timeUse;    
-
-                selectableLayers(indexS) = false;    
-            end
+                
+            samplePortfolio(indexS) = true;    
+            timeUse = timeCalc(constraints, samplePortfolio, modelParameters);              
+            timeRemaining = 1 - timeUse;    
+            selectableLayers(indexS) = false;        
         end
 
         %Now, figure out duration, based on time needed to get sufficiently trained
@@ -176,6 +168,7 @@ if isempty(portfolio)
         
         %If highfidelityDuration < numPeriodsEvaluate, check if agent can afford aspiration after completing prereqs
         newIncome = 0;
+        
         %Average income across all seasons
         for indexT = 1:size(constraints(:,2:end),2)
             newIncome = newIncome + (samplePortfolio' * currentUtilities(:,:,indexT)') .* 1/size(constraints(:,2:end),2);
@@ -192,6 +185,7 @@ if isempty(portfolio)
         elseif ~any(aspirations) && (highfidelityDuration < numPeriodsEvaluate)
             medTermFlag = true;
         end
+
         if medTermFlag == true
             %Re-assess which layers are selectable after high-fidelity duration
             tempPortfolio = samplePortfolio;
@@ -220,60 +214,30 @@ if isempty(portfolio)
             portfolioSets = [portfolioSets; [tempPortfolio' accumulatingDuration 1]];
                 
         end
+        
         aspirationDuration = numPeriodsEvaluate - highfidelityDuration - accumulatingDuration; %Time left to dream about aspirations
-        portfolioSets = [portfolioSets; [aspiration aspirationDuration 0]];
+        portfolioSets = [portfolioSets; [aspiration aspirationDuration 0]]; 
         
-        
+    %If all randomly generated layers are already selectable, enter
     %Forecasting process
     else
-        %Find selectable layers. If there are none (e.g. agent is in debt),
-        %choose least costly layer
-        selectableLayers = find(selectable);
-        if isempty(selectableLayers)
-            test = 'No selectable layers'
-            [minValue,selectableLayers] = min(utilityCosts);
-        end
-
-        %Build portfolio based on currently selectable layers
-        while(sum(timeRemaining) > 0 && any(selectableLayers))
-            selectableInd = ceil(rand()*length(selectableLayers));
-            nextElement = selectableLayers(selectableInd);
-            selectableLayers(selectableInd) = [];
-            if(~portfolio(nextElement))  %if this one isn't already in the portfolio
-            %make a temporary portfolio for consideration
-                tempPortfolio = portfolio;
-                tempPortfolio(nextElement) = true;
-        
-                timeUse = timeCalc(constraints, tempPortfolio, modelParameters);
-                timeExceedance = sum(sum(timeUse > 1)) > 0;
-
-                %Add to portfolio if time is not exceeded
-                if(~timeExceedance)
-                    portfolio(nextElement) = true;
-                    %remove any that are OBVIOUSLY over the limit, though this won't
-                    %catch any that have other time constraints tied to prereqs
-                    timeUse = timeCalc(constraints, portfolio, modelParameters);
-                    timeRemaining = 1 - timeUse;
-                    layers(sum(constraints(layers,2:end) > timeRemaining,2) > 0) = [];
-                end
-
-            end
-        end
-
         %Figure out high-fidelity duration based on maximum of the layers' minimum
         %durations
         duration = max(min(utilityDuration(portfolio',1) - agentExperience(portfolio,1)),0); %Array of minimum time durations for pre-reqs, accounting for experience accumulated
         highfidelityDuration = min([max(duration) numPeriodsEvaluate]);
         portfolioSets = [portfolio highfidelityDuration 1];
+        
         %Now find a random aspiration (if any) that is enabled by selectable
         %portfolio
         potentialAspirations = false(1, size(constraints,1));
         selectedLayers = find(portfolio);
         numLayers = length(selectedLayers);
+        
         for indexI = 1:1:numLayers
             potentialAspirations(find(prereqs(:,selectedLayers(indexI)))') = true;
             
         end
+        
         indAspiration = find(potentialAspirations);
         
         %While there are still potential aspirations, but none has been
@@ -282,10 +246,6 @@ if isempty(portfolio)
             %Select one aspiration at random
             indexA = ceil(rand() * length(indAspiration));
             nextAspiration = indAspiration(indexA);
-
-            %Check for prereqs here
-            %portfolioPrereqs = j(i == nextAspiration)
-            %portfolioPrereqs(portfolioPrereqs == nextAspiration) = []
 
             %If aspiration is not already in portfolio
             if ~portfolio(nextAspiration)
@@ -296,7 +256,6 @@ if isempty(portfolio)
            
         end
 
-        
         % If there are no aspirations to choose from (e.g. agent has
         % already achieved all the training they need), then set
         % high-fidelty duration to numPeriodsEvaluate
@@ -315,6 +274,7 @@ else
 
     %Find selectable layers. If there are none (e.g. agent is in debt), choose least costly layer
     selectableLayers = find(selectable);
+    
     if isempty(selectableLayers)
         test = 'No selectable layers'
         [minValue,selectableLayers] = min(utilityCosts);
@@ -325,6 +285,7 @@ else
         selectableInd = ceil(rand()*length(selectableLayers));
         nextElement = selectableLayers(selectableInd);
         selectableLayers(selectableInd) = [];
+        
         if(~portfolio(nextElement))  %if this one isn't already in the portfolio
             %make a temporary portfolio for consideration
             tempPortfolio = portfolio;
@@ -341,7 +302,6 @@ else
                 timeRemaining = 1 - timeUse;
                 layers(sum(constraints(layers,2:end) > timeRemaining,2) > 0) = [];
             end
-
         end
     end
 
@@ -350,10 +310,12 @@ else
     %highfidelityDuration = min([max(duration) numPeriodsEvaluate]);
     highfidelityDuration = numPeriodsEvaluate;
     portfolioSets = [portfolio' highfidelityDuration 1];
+    
     %Now find a random aspiration (if any) that is enabled by selectable portfolio
     potentialAspirations = false(1, size(constraints,1));
     selectedLayers = find(portfolio);
     numLayers = length(selectedLayers);
+    
     for indexI = 1:1:numLayers
         potentialAspirations(find(prereqs(:,selectedLayers(indexI)),1)) = true;
     end
@@ -387,11 +349,8 @@ else
     end
         
     aspirationDuration = numPeriodsEvaluate - highfidelityDuration;
-    portfolioSets = [portfolioSets; [aspiration aspirationDuration 0]];    
-
-
+    portfolioSets = [portfolioSets; [aspiration aspirationDuration 0]];   
 end
-
 
 %Test for empty portfolios
 if isempty(portfolio)
