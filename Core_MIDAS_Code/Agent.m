@@ -56,7 +56,6 @@ classdef Agent < handle
        pMeetNew
        pAddFitElement
        pChoose
-       pBackCast
        fDecay
        pGetLayer_informed
        pGetLayer_uninformed
