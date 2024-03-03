@@ -1,5 +1,5 @@
 %Load Model Outputs data
-load Aspirations_SenegalTest_BackCastFlagTest0_12-Feb-2024_14-49-53.mat
+load Aspirations_SenegalTest_SenegalRiverDrought0_28-Feb-2024_10-04-21.mat
 migCalibration = output;
 
 scenariolist = [migCalibration];

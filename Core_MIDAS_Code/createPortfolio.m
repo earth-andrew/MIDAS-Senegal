@@ -117,7 +117,7 @@ if isempty(portfolio)
         if any(selectable(portfolioPrereqs))
             indPrereq = datasample(portfolioPrereqs,1);
             samplePortfolio(indPrereq) = true;
-            duration = min(max(utilityDuration(indPrereq,1) - agentExperience(indPrereq,1),0),min(utilityDuration(samplePortfolio,2) - agentTraining(samplePortfolio))); %Minimum time durations for pre-reqs, accounting for any experience already accumulated. Note that some layers can be prereqs even if sufficient training is amassed (due to costs), hence max of training needed and 0
+            duration = min(max(utilityDuration(indPrereq,1) - agentExperience(indPrereq,1),0),min(utilityDuration(samplePortfolio,2) - agentTraining(samplePortfolio))); %Minimum time durations for pre-reqs, accounting for any experience already accumulated. Note that some layers can be prereqs even if sufficient training is amassed (due to costs), hence max of training needed and 0     
         end
             
         %If time is exceeded, remove layers one by one    
@@ -154,9 +154,10 @@ if isempty(portfolio)
             timeRemaining = 1 - timeUse;    
             selectableLayers(indexS) = false;        
         end
+        
 
         %Now, figure out duration, based on time needed to get sufficiently trained
-        if any(portfolioPrereqs) & (duration < numPeriodsEvaluate)
+        if any(selectable(portfolioPrereqs)) && (duration < numPeriodsEvaluate)
             highfidelityDuration = min(duration, min(utilityDuration(samplePortfolio,2) - agentTraining(samplePortfolio)));
         else
             %If no prereqs, set highFidelity duration to max time allowed

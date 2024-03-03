@@ -149,6 +149,7 @@ end
 %construct a network among agents according to parameters specified in
 %networkParameters.  Any change in network structure should modify/replace
 %the createNetwork function
+
 [network, distanceMatrix ] = createNetwork(locations, mapParameters, agentList, networkParameters, aliveList);
 
 

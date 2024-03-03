@@ -31,7 +31,7 @@ baseMovingCosts = baseMovingCosts * 0;
 %   Note any distance-specific costs
 
 %distanceCost = 10;  %per unit distance
-distanceCost = mapParameters.movingCostPerMile;%1000;%10000;  %maximum moving cost by distance
+distanceCost = mapParameters.movingCostPerMile; %1000;%10000;  %maximum moving cost by distance
 
 %parameters for beta distribution
 beta1 = 5;
@@ -39,11 +39,17 @@ beta2 = 2;
 distanceMin = mapParameters.minDistForCost; %below this distance in miles, we consider it 'free'
 distanceMax = mapParameters.maxDistForCost; %above this distance, costs don't really rise
 
+%TEST DATA - REMOVE WHEN PROBLEM WITH RE-SCALING IS FIXED
+%distanceMin = 50;
+%distanceMax = 200;
+%distanceCost = 40000;
 
 %translate actual distances into their beta distribution equivalent, then
 %calculate the distance costs
-Db = (distanceMatrix - distanceMin) / (distanceMax - distanceMin);
-distanceCost = betacdf(Db,beta1,beta2) * distanceCost;
+%Db = (distanceMatrix - distanceMin) / (distanceMax - distanceMin);
+%distanceCost = betacdf(Db,beta1,beta2) * distanceCost;
+
+distanceCost = distanceMatrix * distanceCost;
 
 %   Next, make any unit-specific exceptions in an x by 3 array called exceptions, of the form:
 %   [unit1 unit2 rate; ...].  The unit IDs should correspond to the

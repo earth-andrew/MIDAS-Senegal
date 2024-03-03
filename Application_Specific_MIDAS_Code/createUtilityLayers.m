@@ -149,14 +149,28 @@ utilityDuration = [8 inf; %ag-aqua rural
     modelParameters.schoolLength modelParameters.schoolLength]; %education urban
 
 
-quarterShare = incomeQs ./ (sum(incomeQs,2));
-
+quarterShare = incomeQs ./ (sum(incomeQs,2))
 utilityBaseLayers = ones(height(locations),height(utilityLayerFunctions),timeSteps);
-for indexI = 1:modelParameters.cycleLength:size(utilityBaseLayers,3)
-    utilityBaseLayers(:,:,indexI) = utility_layers;
 
-    %Randomize Utilities by Layer
-    %utilityBaseLayers(:,:,indexI) = 1100000 * rand();
+%Read in table of climate-affected locations
+climateTable = readtable(modelParameters.climateFile);
+climateLocations = climateTable.MIDASIndex; %List of indices for locations affected by climate
+
+for indexI = 1:modelParameters.cycleLength:size(utilityBaseLayers,3)
+    if modelParameters.randomUtilitiesYN == 1
+        utilityBaseLayers(:,:,indexI) = 1100000 * rand();
+    else
+    
+        utilityBaseLayers(:,:,indexI) = utility_layers;
+    
+        if modelParameters.climateFlag == 1
+            %For timespans within climate event period, adjust income for given
+            %locations
+            if ge(indexI, modelParameters.climateStart) && le(indexI, modelParameters.climateStop)
+                utilityBaseLayers(climateLocations, modelParameters.climateLayers,indexI) = utilityBaseLayers(climateLocations,modelParameters.climateLayers,indexI) .* (1 - (1 - modelParameters.climateEffect) .* (indexI - modelParameters.climateStart) / (modelParameters.climateStop - modelParameters.climateStart)) ;
+            end
+        end
+    end
 end
 
 for indexI = 1:size(utilityBaseLayers,1)
@@ -168,6 +182,7 @@ for indexI = 1:size(utilityBaseLayers,1)
         utilityBaseLayers(indexI,indexJ,:) = temp_2;
     end
 end
+
 
 %now add some lead time for agents to learn before time actually starts
 %moving
@@ -248,11 +263,21 @@ numAgentsModel = locationProb * modelParameters.numAgents;
 %FIX PROPORTIONS FOR UTILITY_LAYERS_PROP (FOR NOW JUST SET TO
 %UTILITY_LAYERS. AND CHECK HARDSLOTCOUNT
 
-%nExpected =  (numAgentsModel*ones(1,size(utility_layers_prop,2))).*utility_layers_prop;
+%nExpected =  (numAgentsModel*ones(1,size(utility_layers_prop,2))) .* utility_layers_prop;
 nExpected =  (numAgentsModel*ones(1,size(utility_layers,2)));
 
+%Add Education-specific proportions
+edTable = readtable(modelParameters.educationFile);
+
+%First set education slots to 0 for all regions
+nExpected(:,13:14) = numAgentsModel * zeros(1,2);
+
+%Then create ed slots by multiply education propotion * total ed slots * 0.5 to distribute between rural and urban layers
+nExpected(edTable.locationIndex,13:14) = (edTable.educationProbability * modelParameters.educationSlots * 0.5) * ones(1,2);
+
 hardSlotCountYN = false(size(nExpected));
-%hardSlotCountYN(:,1:15) = true;
+%Set hard slots for educational opportunities
+hardSlotCountYN(:,13:14) = true;
 
 %utility layers may be income, use value, etc.  identify what form of
 %utility it is, so that they get added and weighted appropriately in
@@ -308,14 +333,22 @@ utilityPrereqs = zeros(size(utilityTimeConstraints,1));
 
 utilityPrereqs(3,1) = 1; %Livestock in rural space requires ag in rural space
 utilityPrereqs(4,2) = 1; %Livestock in urban space requires ag in urban space
-utilityPrereqs(9,7) = 1; 
-utilityPrereqs(9,8) = 1; %small business require some prior service experience in either rural or urban sestting
-utilityPrereqs(10,7) = 1;
-utilityPrereqs(10,8) = 1;
 utilityPrereqs(5,13) = 1; %Professional work in rural or urban space requires education in rural or urban setting
 utilityPrereqs(5,14) = 1;
 utilityPrereqs(6,13) = 1;
 utilityPrereqs(6,14) = 1;
+utilityPrereqs(7,13) = 1; %Services requires education in rural or urban setting
+utilityPrereqs(7,14) = 1;
+utilityPrereqs(8,13) = 1;
+utilityPrereqs(8,14) = 1;
+utilityPrereqs(9,13) = 1; %small business require education
+utilityPrereqs(9,14) = 1; 
+utilityPrereqs(10,13) = 1;
+utilityPrereqs(10,14) = 1;
+utilityPrereqs(11,13) = 1; %trades require education
+utilityPrereqs(11,14) = 1; 
+utilityPrereqs(12,13) = 1;
+utilityPrereqs(12,14) = 1;
 
 
 

@@ -7,9 +7,6 @@ classdef Agent < handle
        matrixLocation
        visX
        visY
-       wealth
-       wealthHistory
-       realizedUtility
        age
        gender
        TOD
@@ -28,13 +25,19 @@ classdef Agent < handle
        bestPortfolioValues
        knowsIncomeLocation
        incomeLayersHistory
+       wealth
+       incomeHistory
+       wealthHistory
+       realizedUtility
        training
+       diploma
        experience
        scratch;
        overlap
        heardOpening
        expectedProbOpening
        timeProbOpeningUpdated
+
        %incomeLayersTest
        currentPortfolio
        currentAspiration

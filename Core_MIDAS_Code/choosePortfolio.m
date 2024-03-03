@@ -110,7 +110,7 @@ consideredPortfolioSet = []; %List of portfolios considered by agent across all 
 
 %Update agent pre-requisites, with special function for education (to
 %account for minimum number of years needed)
-[agent, backCastCount] = trainingTracker(agent, utilityVariables, modelParameters, backCastCount);
+[agent, backCastCount] = trainingTracker(agent, utilityVariables, modelParameters, backCastCount, currentT);
 
 %Check which layers are "selectable" based on agent prereqs
 selectable = selectableFlag(utilityVariables.utilityPrereqs, utilityVariables.utilityAccessCodesMat, utilityVariables.utilityAccessCosts, agent.training, agent.experience, agent.currentPortfolio, agent.wealth, utilityVariables.utilityDuration(:,2));
@@ -428,7 +428,6 @@ for indexL = 1:length(locationList)
         %prospect theory hack - check!!!!
         vSign = sign(currentPortfolioValue');
         vSign(vSign < 0) = agent.prospectLoss;
-        test3 = currentPortfolioValue';
         portfolioValues(indexP) = (1/riskCoeff) * (vSign .* (abs(currentPortfolioValue') .^ riskCoeff)) * discountFactor;
     end
     
@@ -501,6 +500,7 @@ if(currentLocation ~= bestLocation)
     agent.matrixLocation = locationList(choice);
 
     agent.location = mapVariables.locations(agent.matrixLocation,:).cityID;
+
 
     locationMapIndex = find(mapVariables.map(:,:,end) == agent.location);
     if(isempty(locationMapIndex))

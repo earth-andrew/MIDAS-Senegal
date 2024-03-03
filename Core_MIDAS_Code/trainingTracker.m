@@ -1,4 +1,4 @@
-function [ currentAgent, backCastNum] = trainingTracker(currentAgent, utilityVariables, modelParameters, backCastNum)
+function [ currentAgent, backCastNum] = trainingTracker(currentAgent, utilityVariables, modelParameters, backCastNum, indexT)
 %This function tracks how many periods of "training" an agent has received in
 %any given layer. To make this generalizable, we track the periods of
 %experience in each layer, even though not all layers may have formal
@@ -18,20 +18,6 @@ function [ currentAgent, backCastNum] = trainingTracker(currentAgent, utilityVar
 
 [i,j,s] = find(utilityVariables.utilityPrereqs);
 
-%Set Locations for identifying set of best portfolios that are stored
-%currentLocation = currentAgent.matrixLocation;
-%[sortedLocations,sortedIndex] = sortrows(currentAgent.bestPortfolioValues,-1);
-%sortedIndex = sortedIndex(sortedLocations > 0);
-%bestLocations = sortedIndex(1:min(length(sortedIndex),currentAgent.numBestLocation));
-%otherRandomLocations = find(any(currentAgent.knowsIncomeLocation,2));
-%randomLocations = otherRandomLocations(randperm(length(otherRandomLocations),min(length(otherRandomLocations),currentAgent.numRandomLocation)));
-%locationList = [currentLocation; bestLocations; randomLocations];
-
-%remove duplicates
-%[bSort,iSort] = sort(locationList);
-%locationList = locationList(iSort([true; diff(bSort)>0]),:);
-
-
 %Add increment of 1 period experience for each layer in agent's current
 %Portfolio
 numLayers = size(utilityVariables.utilityDuration,1);
@@ -44,11 +30,18 @@ minLength = utilityVariables.utilityDuration(:,1);
 newCerts = find(currentAgent.experience >= minLength);
 currentAgent.training(newCerts) = true;
 
+%If one of those new certifications is education related, note this in the
+%agent's diploma tracker
+if ismember(13, newCerts) | ismember(14, newCerts)
+    currentAgent.diploma = [currentAgent.diploma indexT];
+end
+
 %Test if agent aspiration is now selectable
 selectableLayers = selectableFlag(utilityVariables.utilityPrereqs, utilityVariables.utilityAccessCodesMat, utilityVariables.utilityAccessCosts, currentAgent.training, currentAgent.experience, [], [], utilityVariables.utilityDuration(:,2));
 
 if any(selectableLayers' & currentAgent.currentAspiration)
     [currentAgent.currentPortfolio, backCastNum] = createPortfolio(currentAgent.currentAspiration, [],utilityVariables.utilityTimeConstraints, utilityVariables.utilityPrereqs, currentAgent.pAddFitElement, currentAgent.training, currentAgent.experience, utilityVariables.utilityAccessCosts, utilityVariables.utilityDuration, currentAgent.numPeriodsEvaluate, selectableLayers, [], currentAgent.wealth, backCastNum, utilityVariables.utilityAccessCodesMat, modelParameters);
+
 %Adjust time of high-fidelity duration if new experience helps fulfill prereq
 else
     %Ensure portfolio is not empty

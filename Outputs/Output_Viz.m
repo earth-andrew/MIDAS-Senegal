@@ -1,4 +1,4 @@
-load Aspirations_SenegalTest_BackCastFlagTest0_12-Feb-2024_14-49-53.mat
+load Aspirations_SenegalTest_SenegalRiverDrought0_29-Feb-2024_19-51-51.mat
 migCalibration = output;
 
 %load Aspirations_SenegalTest_R1JobsCalibration0_07-Feb-2024_23-52-58.mat
@@ -37,7 +37,7 @@ X = categorical({'Ag-Aqua R', 'Ag-Aqua U', 'Livestock R', 'Livestock U', 'Profes
 X = reordercats(X, {'Ag-Aqua R', 'Ag-Aqua U', 'Livestock R', 'Livestock U', 'Professional R', 'Professional U', 'Services R','Services U', 'Trades R','Trades U', 'Small Business R', 'Small Business U', 'Education R', 'Education U'});
 Y = [];
 for indexC = 1:1:scenarios
-    Y = [Y; jobs(indexC,:,end)];
+    Y = [Y; jobs(indexC,:,60)];
 end
 %bar(X, Y(1,:), 'FaceColor', cm(1,:))
 hold on
@@ -203,7 +203,7 @@ end
 
 
 %% Line Plot of job distributions over time
-indexL = 13; %Layer of Comparison
+indexL = 14; %Layer of Comparison
 categories = {'Ag-Aqua R', 'Ag-Aqua U', 'Livestock R', 'Livestock U', 'Professional R', 'Professional U', 'Services R','Services U', 'Trades R','Trades U', 'Small Business R', 'Small Business U', 'Education R', 'Education U'};
 plot(time,squeeze(jobs(1,indexL,:)),'LineWidth',3)
 hold on
@@ -281,6 +281,10 @@ legend(categories,'FontSize',14)
 
 %% Migration Trips over time
 %%Line Plot of Migration Trips
+
+%Save migration data as a .csv file
+writematrix(scenariolist(1).migrationMatrix,'BackcastFlagTestMigrationMatrix.csv')
+
 simplemigration = zeros(scenarios,steps);
 lag = 4;
 for indexS = 1:scenarios

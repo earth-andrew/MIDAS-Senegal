@@ -87,7 +87,8 @@ tempMat = currentRun.migrationMatrix;
                 sum(tempMat(collapseColumns{7},:)); ...
                 sum(tempMat(collapseColumns{8},:)) ...
                 ];
-
+            
+            
             fracMigsRun = tempMat / sum(sum(tempMat))
             migRateRun = tempMat / size(currentRun.agentSummary,1)  %(this data is 11 years)
             inOutRun = sum(tempMat) ./ (sum(tempMat'))'

@@ -1,15 +1,15 @@
 function [outputs] = midasMainLoop(inputs, runName)
 %runMigrationModel.m main time loop of migration model
 
-% FIX agent WEALTH HISTORY TO 1-DIMENSIONAL ARRAY
-
-
 close all;
 
 tic;
 
 outputs = [];
 [agentParameters, modelParameters, networkParameters, mapParameters] = readParameters(inputs);
+
+%Draw from income distributions
+reshapeData(modelParameters)
 [agentList, aliveList, modelParameters, agentParameters, mapParameters, utilityVariables, mapVariables, demographicVariables] = buildWorld(modelParameters, mapParameters, agentParameters, networkParameters);
     
 numLocations = size(mapVariables.locations,1);
@@ -260,20 +260,6 @@ for indexT = 1:modelParameters.timeSteps
         
         %add income layer to history
         utilityVariables = updateHistory(utilityVariables, modelParameters, indexT, countAgentsPerLayer);
-        
-        %income functions are of the form f(k,m,nExpected,n_actual, base)
-        % - note that this may change depending on the simulation - 
-        %be sure that whatever your income functions are, the cellfun input
-        %matches appropriately
-%         for indexL = 1:numLayers
-%             utilityVariables.utilityHistory(:,indexL, indexT) = arrayfun(utilityVariables.utilityLayerFunctions{indexL}, ...
-%                 mapVariables.locations.locationX, ...
-%                 mapVariables.locations.locationY, ...
-%                 ones(numLocations,1)*indexT, ...
-%                 countAgentsPerLayer(:,indexL, indexT), ...
-%                 utilityVariables.utilityBaseLayers(:,indexL,indexT));
-%         end
-        
         %make payments and transfers as appropriate to all agents, and
         %update knowledge
         for indexA = 1:length(livingAgents)
@@ -281,9 +267,9 @@ for indexT = 1:modelParameters.timeSteps
             currentPortfolio = logical(currentAgent.currentPortfolio(1,1:size(utilityVariables.utilityHistory,2)));
             %find out how much the current agent made, from each layer, and
             %update their knowledge
-            
-            newIncome = sum(utilityVariables.utilityHistory(currentAgent.matrixLocation,currentPortfolio(utilityVariables.incomeForms(currentPortfolio)), indexT));
+            newIncome = sum(utilityVariables.utilityHistory(currentAgent.matrixLocation,currentPortfolio, indexT),'all');
 
+            currentAgent.incomeHistory(indexT) = newIncome;
             
             %add in any income that has been shared in to the agent, to
             %include in sharing-out decision-making
@@ -421,9 +407,6 @@ agentSummary.rValue = [agentList(:).rValue]';
 agentSummary.bList = [agentList(:).bList]';
 agentSummary.TOD = [agentList(:).TOD]';
 agentSummary.trapped = [agentList(:).trapped]';
-%agentSummary.wealthHistory = [agentList(:).wealthHistory]';
-
-
 
 tempCurrentPortfolio = cell(length(agentList),1);
 tempFirstPortfolio = cell(length(agentList),1);
@@ -431,12 +414,14 @@ tempPortfolioHistory = cell(length(agentList),1);
 tempAspirationHistory = cell(length(agentList),1);
 tempBackCastProportion = cell(length(agentList),1);
 tempWealthHistory = cell(length(agentList),1);
+tempIncomeHistory = cell(length(agentList),1);
 tempNetwork = cell(length(agentList),1);
 tempMove = cell(length(agentList),1);
 tempAccess = cell(length(agentList),1);
 tempConsideredHistory = cell(length(agentList),1);
 tempTraining = cell(length(agentList),1);
 tempExperience = cell(length(agentList),1);
+tempDiploma = cell(length(agentList),1);
 
 for indexI = 1:length(agentList)
     tempCurrentPortfolio{indexI} = agentList(indexI).currentPortfolio;
@@ -448,6 +433,8 @@ for indexI = 1:length(agentList)
     tempTraining{indexI} = agentList(indexI).training;
     tempExperience{indexI} = agentList(indexI).experience;
     tempWealthHistory{indexI} = agentList(indexI).wealthHistory;
+    tempIncomeHistory{indexI} = agentList(indexI).incomeHistory;
+    tempDiploma{indexI} = agentList(indexI).diploma;
     try
     tempNetwork{indexI} = [agentList(indexI).network(:).id];
     catch
@@ -468,6 +455,8 @@ agentSummary.accessCodes = tempAccess;
 agentSummary.training = tempTraining;
 agentSummary.experience = tempExperience;
 agentSummary.wealthHistory = tempWealthHistory;
+agentSummary.incomeHistory = tempIncomeHistory;
+agentSummary.diploma = tempDiploma;
 
 outputs.agentSummary = agentSummary;
 

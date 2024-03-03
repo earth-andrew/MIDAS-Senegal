@@ -9,28 +9,43 @@ popSum = sum(sum(popWeights));
 
 quantileMarker = 0.80;
 
-laborData = readtable('../Data/OccupationAdmin1_2013Census.csv');
+laborData = readtable('../Data/occupation_epred_sum.csv');
+medianValues = laborData(:,{'sector', 'urban', 'admin1', 'pred_med'}); %For median values
+ruralUrbanTable = unstack(medianValues,'pred_med','urban'); %For median values
+sectorTable = unstack(ruralUrbanTable, {'rural','urban'}, 'sector');
+sectorTable = sortrows(sectorTable,'admin1','ascend');
 
-%Normalizing data table so that labor segmentation is expressed in
-%proportions
-laborData.Pop = laborData.Professional + laborData.Services + laborData.Ag_Aqua + laborData.Trades;
-proportionalLabor = laborData{:,3:end-1} ./ laborData.Pop;
-
+%Combine regions lumped together
 regionNames = {"Dakar", "Ziguinchor", "Diourbel", "Saint Louis, Louga, Matam", ...
     "Tambacounda, Kedougou", "Kaolack, Fatick, Kaffrine", "Thiès", "Kolda, Sedhiou"};
 
+%Translating rows from epred sheet into order of regionNames
+collapseRows = {
+    1,
+    14,
+    2,
+    [8 9 10],
+    [6 12],
+    [3 4 5],
+    13,
+    [7 11],
+    };
+
+%Note: Figure out weights by Admin 1 region for weighted mean
+regionData = [mean(sectorTable{collapseRows{1},2:end},1); ...
+                mean(sectorTable{collapseRows{2},2:end},1); ...
+                mean(sectorTable{collapseRows{3},2:end},1); ...
+                mean(sectorTable{collapseRows{4},2:end},1); ...
+                mean(sectorTable{collapseRows{5},2:end},1); ...
+                mean(sectorTable{collapseRows{6},2:end},1); ...
+                mean(sectorTable{collapseRows{7},2:end},1); ...
+                mean(sectorTable{collapseRows{8},2:end},1); ...
+                ];
+
+
+
 admin1Units = size(regionNames,2);
 
-collapseRows = { ...
-    [7 14 33 36], ...
-    [3 32 45], ...
-    [2 8 28], ...
-    [6 17 19 24 25 27 34 35 37], ...
-    [1 12 20 22 38 39 41], ...
-    [4 9 10 11 15 16 18 23 26 31], ...
-    [29 42 43], ...
-    [5 13 21 30 40 44], ...
-    };
 
 %Loading Model Runs
 fileList = dir('SenegalTest_CalibrationExperiment_*.mat');
@@ -45,13 +60,10 @@ for indexI = 1:length(fileList)
     simulatedResults = currentRun.output; 
     fprintf(['Run ' num2str(indexI) ' of ' num2str(length(fileList)) '.\n'])
 
-%loading model outputs
-%load '../Outputs/Aspirations_SenegalTest_R3BaseCase0_04-Feb-2024_16-47-44.mat'
-
 
 %Obtaining breakdown of agent distribution by admin 2 unit and job category
 jobcats = size(simulatedResults.locations,2);
-uniqueJobCats = round(jobcats / 2); %Every two job indices (e.g. 1 and 2) are the same type of work, but one is
+%uniqueJobCats = round(jobcats / 2); %Every two job indices (e.g. 1 and 2) are the same type of work, but one is
 %rural and urban.
 admin2Units = height(simulatedResults.countAgentsPerLayer);
 numAgents = height(simulatedResults.agentSummary(:,1));
@@ -64,7 +76,16 @@ for indexL = 1:1:admin2Units
 end
 
 %Now combine totals for admin2Units that share an admin1unit
-
+collapseRows = { ...
+    [7 14 33 36], ...
+    [3 32 45], ...
+    [2 8 28], ...
+    [6 17 19 24 25 27 34 35 37], ...
+    [1 12 20 22 38 39 41], ...
+    [4 9 10 11 15 16 18 23 26 31], ...
+    [29 42 43], ...
+    [5 13 21 30 40 44], ...
+    };
 
 regionJobs = [sum(jobs(collapseRows{1},:)); ...
                 sum(jobs(collapseRows{2},:)); ...
@@ -78,32 +99,32 @@ regionJobs = [sum(jobs(collapseRows{1},:)); ...
 
 
 %Combine job totals for urban and rural layers in each location/category.
-combinedJobs = zeros(admin1Units, uniqueJobCats);
-for indexU = 1:1:uniqueJobCats
-    combinedJobs(:,indexU) = regionJobs(:,(2 * indexU - 1)) + regionJobs(:, (2 * indexU));
-end
+%combinedJobs = zeros(admin1Units, uniqueJobCats);
+%for indexU = 1:1:uniqueJobCats
+    %combinedJobs(:,indexU) = regionJobs(:,(2 * indexU - 1)) + regionJobs(:, (2 * indexU));
+%end
 
 
-%Only keep job categories for which we have data (ag-aqua,
-%professional,services, trades)
-restrictedJobs = zeros(admin1Units, size(proportionalLabor,2));
+%Only keep job categories for which we have data (i.e. non-education)
+restrictedJobs = zeros(admin1Units, size(regionJobs,2));
+restrictedJobs = regionJobs(:,1:end-2);
 
-restrictedJobs(:,1) = combinedJobs(:,3); %Professional totals go first to match data
-restrictedJobs(:,2) = combinedJobs(:,4); %Then services
-restrictedJobs(:,3) = combinedJobs(:,1) + combinedJobs(:,2); %Then combine ag-aqua and livestock into one column
-restrictedJobs(:,4) = combinedJobs(:,6); %Then trades
+%restrictedJobs(:,1) = combinedJobs(:,3); %Professional totals go first to match data
+%restrictedJobs(:,2) = combinedJobs(:,4); %Then services
+%restrictedJobs(:,3) = combinedJobs(:,1) + combinedJobs(:,2); %Then combine ag-aqua and livestock into one column
+%restrictedJobs(:,4) = combinedJobs(:,6); %Then trades
 
 %Now normalize totals based on sub-population included in these restricted
 %categories
 simulatedProportion = diag(1./sum(restrictedJobs,2)) * restrictedJobs;
 
 %Now evaluate differences between simulated and data job distributions
-jobsError = sum(sum((simulatedProportion - proportionalLabor).^2));
-popWeightJobsError = sum(sum(((simulatedProportion - proportionalLabor).^2).*popWeights))/popSum;
-jobsError_r2 = weightedPearson(simulatedProportion(:), proportionalLabor(:), ones(numel(simulatedProportion),1));
+jobsError = sum(sum((simulatedProportion - regionData).^2));
+popWeightJobsError = sum(sum(((simulatedProportion - regionData).^2).*popWeights))/popSum;
+jobsError_r2 = weightedPearson(simulatedProportion(:), regionData(:), ones(numel(simulatedProportion),1));
 
 adjustedPopWeights = repmat(popWeights, size(simulatedProportion,2),1);
-popWeightJobsError_r2 = weightedPearson(simulatedProportion(:), proportionalLabor(:), adjustedPopWeights);
+popWeightJobsError_r2 = weightedPearson(simulatedProportion(:), regionData(:), adjustedPopWeights);
 
 
 %runLevel

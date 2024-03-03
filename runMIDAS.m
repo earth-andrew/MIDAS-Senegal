@@ -1,4 +1,4 @@
-function mcScriptRun()  
+ function mcScriptRun()  
 
 clear functions
 clear classes
@@ -11,13 +11,10 @@ addpath('./Data');
 rng('shuffle');
 
 runName = 'FarmSeasonality';
-series = ['Aspirations_SenegalTest_BackCastFlagTest'];
+series = ['SenegalSaltwaterIntrusion_MedianRun'];
 saveDirectory = './Outputs/';
 
 input = [];
-
-%Draw from income distributions
-reshapeData()
 
 %this next line runs the MIDAS model
 output = midasMainLoop(input, runName);
