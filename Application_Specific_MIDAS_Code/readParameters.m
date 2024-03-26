@@ -8,7 +8,7 @@ mapParameters.sizeY = 600;
 mapParameters.levelID = '_PCODE';
 mapParameters.levelName = '_FR';
 modelParameters.cycleLength = 4;
-modelParameters.numCycles = 25;
+modelParameters.numCycles = 5;
 modelParameters.incomeInterval = 1;
 modelParameters.visualizeYN = 0;
 modelParameters.listTimeStepYN = 1;
@@ -25,14 +25,20 @@ modelParameters.utility_iReturn = 0.05;
 modelParameters.utility_iDiscount = 0.05;
 modelParameters.utility_iYears = floor(0.5 * modelParameters.numCycles); %Check that this should be 1/2 of number of cycles
 modelParameters.educationCost = 46821; 
-modelParameters.educationSlots = 501; %Proportion of population that can enroll in tertiary ed at any time
+modelParameters.educationSlots = 501; %Number of agents that can enroll in tertiary ed at any time
 
 %Climate Parameters
 modelParameters.climateFlag = 1; %1 to impose climate effects
 modelParameters.climateEffect = 0.1; %Income re-scaling due to climate impact
-modelParameters.climateStart = 20; %Time step at which climate effects start
-modelParameters.climateStop = 80; %time step at which climate effects stop
+modelParameters.climateStart = 10; %Time step at which climate effects start
+modelParameters.climateStop = 20; %time step at which climate effects stop
 modelParameters.climateLayers = [1:4]; %Layers that are affected by climate impacts
+
+%Ed Expansion Parameters
+modelParameters.edExpansionFlag = 1; %1 to specify education expansion
+modelParameters.edExpansionStart = 1; %Time at which education expansion starts
+modelParameters.edExpansionFile = './Data/SenegalEducationExpansion.csv';
+modelParameters.expansionSlots = 501; %Number of additional slots to be created as a result of ed expansion policy
 
 modelParameters.largeFarmCost = 400;
 modelParameters.smallFarmCost = 100;

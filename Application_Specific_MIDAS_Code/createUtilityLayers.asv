@@ -128,8 +128,8 @@ incomeQs =[0 0 0 1; ... %ag-aqua rural
     1 1 1 1; %small business urban
     1 1 1 1; ... %trades rural
     1 1 1 1; %trades urban
-    0 0 0 0; %education rural
-    0 0 0 0];  %education urban
+    1 1 1 1; %education rural
+    1 1 1 1];  %education urban
 
 % N x 2 Matrix specifying the [minimum, maximum] number of cycles that each layer entails
 
@@ -167,12 +167,15 @@ for indexI = 1:modelParameters.cycleLength:size(utilityBaseLayers,3)
             %For timespans within climate event period, adjust income for given
             %locations
             if ge(indexI, modelParameters.climateStart) && le(indexI, modelParameters.climateStop)
-                test = indexI
-                utilityBaseLayers(climateLocations, modelParameters.climateLayers,indexI) = utilityBaseLayers(climateLocations,modelParameters.climateLayers,indexI) .* (1 - (1 - modelParameters.climateEffect)) .* (indexI - modelParameters.climateStart) / (modelParameters.climateE) ;
+                %utilityBaseLayers(climateLocations, modelParameters.climateLayers,indexI) = utilityBaseLayers(climateLocations,modelParameters.climateLayers,indexI) .* (1 - (1 - modelParameters.climateEffect) .* (indexI - modelParameters.climateStart) / (modelParameters.climateStop - modelParameters.climateStart)) ;
+                utilityBaseLayers(climateLocations, modelParameters.climateLayers,indexI) = utilityBaseLayers(climateLocations,modelParameters.climateLayers,indexI) .* 0;
             end
+            
         end
     end
 end
+
+
 
 for indexI = 1:size(utilityBaseLayers,1)
     for indexJ = 1:size(utilityBaseLayers,2)
@@ -184,18 +187,18 @@ for indexI = 1:size(utilityBaseLayers,1)
     end
 end
 
-
 %now add some lead time for agents to learn before time actually starts
 %moving
 utilityBaseLayers(:,:,leadTime+1:leadTime+timeSteps) = utilityBaseLayers;
+
 for indexI = leadTime:-1:1
    utilityBaseLayers(:,:,indexI) = utilityBaseLayers(:,:,indexI+modelParameters.cycleLength); 
 end
 
+
+
 %Converting any NaN's to 0
 utilityBaseLayers(isnan(utilityBaseLayers)) = 0;
-
-test = utilityBaseLayers
 
 %%%%%%%%%%%%%%%%%%%%%%%
 %%utilityAccessCosts and utilityAccessCodesMat
@@ -267,18 +270,27 @@ numAgentsModel = locationProb * modelParameters.numAgents;
 %UTILITY_LAYERS. AND CHECK HARDSLOTCOUNT
 
 %nExpected =  (numAgentsModel*ones(1,size(utility_layers_prop,2))) .* utility_layers_prop;
-nExpected =  (numAgentsModel*ones(1,size(utility_layers,2)));
+
+%Set nExpected as a function of place AND time
+nExpected = zeros(size(numAgentsModel,1),size(utility_layers,2),leadTime + timeSteps);
+nExpected =  (numAgentsModel .* ones(1,size(utility_layers,2),leadTime + timeSteps));
 
 %Add Education-specific proportions
 edTable = readtable(modelParameters.educationFile);
 
-%First set education slots to 0 for all regions
-nExpected(:,13:14) = numAgentsModel * zeros(1,2);
+%First set education slots to 0 for all regions and time slots
+nExpected(:,13:14,:) = numAgentsModel .* zeros(1,2,timeSteps);
 
 %Then create ed slots by multiply education propotion * total ed slots * 0.5 to distribute between rural and urban layers
-nExpected(edTable.locationIndex,13:14) = (edTable.educationProbability * modelParameters.educationSlots * 0.5) * ones(1,2);
+nExpected(edTable.locationIndex,13:14,:) = (edTable.educationProbability .* modelParameters.educationSlots .* 0.5) .* ones(1,2,timeSteps);
 
-hardSlotCountYN = false(size(nExpected));
+%Now adjust for education expansion scenario if specified
+if modelParameters.edExpansionFlag == 1
+    expansionTable = readtable(modelParameters.edExpansionFile);
+    nExpected(expansionTable.locationIndex,13:14,modelParameters.edExpansionStart:end) = nExpected(expansionTable.locationIndex,13:14,1) + expansionTable.educationProbability .* modelParameters.expansionSlots .* 0.5 .* ones(1,2,(timeSteps - modelParameters.edExpansionStart + 1)); %Distributing additional slots by geographic location 
+end
+
+hardSlotCountYN = false(size(nExpected,1:2));
 %Set hard slots for educational opportunities
 hardSlotCountYN(:,13:14) = true;
 
@@ -372,6 +384,7 @@ for indexI = 1:size(nExpected,2)
    tempExpected(:,indexI) = sum(nExpected(:,utilityPrereqs(:,indexI) > 0),2); 
 end
 nExpected = tempExpected;
+
 
 %%% OTHER EXAMPLE CODE BELOW HERE
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

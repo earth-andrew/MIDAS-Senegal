@@ -1,4 +1,4 @@
-load Aspirations_SenegalTest_SenegalRiverDrought0_29-Feb-2024_19-51-51.mat
+load SenegalDroughtTest_MedianRun0_26-Mar-2024_16-44-50.mat
 migCalibration = output;
 
 %load Aspirations_SenegalTest_R1JobsCalibration0_07-Feb-2024_23-52-58.mat
@@ -37,7 +37,7 @@ X = categorical({'Ag-Aqua R', 'Ag-Aqua U', 'Livestock R', 'Livestock U', 'Profes
 X = reordercats(X, {'Ag-Aqua R', 'Ag-Aqua U', 'Livestock R', 'Livestock U', 'Professional R', 'Professional U', 'Services R','Services U', 'Trades R','Trades U', 'Small Business R', 'Small Business U', 'Education R', 'Education U'});
 Y = [];
 for indexC = 1:1:scenarios
-    Y = [Y; jobs(indexC,:,60)];
+    Y = [Y; jobs(indexC,:,20)];
 end
 %bar(X, Y(1,:), 'FaceColor', cm(1,:))
 hold on

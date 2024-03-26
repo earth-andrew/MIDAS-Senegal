@@ -258,8 +258,8 @@ for indexT = 1:modelParameters.timeSteps
             countAgentsPerLayer(agentCityIndex(indexA), currentPortfolio, indexT) = countAgentsPerLayer(agentCityIndex(indexA), currentPortfolio, indexT) + 1;
         end
         
-        %add income layer to history
         utilityVariables = updateHistory(utilityVariables, modelParameters, indexT, countAgentsPerLayer);
+       
         %make payments and transfers as appropriate to all agents, and
         %update knowledge
         for indexA = 1:length(livingAgents)
@@ -267,8 +267,8 @@ for indexT = 1:modelParameters.timeSteps
             currentPortfolio = logical(currentAgent.currentPortfolio(1,1:size(utilityVariables.utilityHistory,2)));
             %find out how much the current agent made, from each layer, and
             %update their knowledge
-            newIncome = sum(utilityVariables.utilityHistory(currentAgent.matrixLocation,currentPortfolio, indexT),'all');
-
+            newIncome = sum(utilityVariables.utilityHistory(currentAgent.matrixLocation,logical(currentPortfolio .* utilityVariables.incomeForms'), indexT),'all');
+        
             currentAgent.incomeHistory(indexT) = newIncome;
             
             %add in any income that has been shared in to the agent, to
@@ -325,7 +325,7 @@ for indexT = 1:modelParameters.timeSteps
     
     %ANY ACTIONS NECESSARY FOR NEXT TIMESTEP, TO OCCUR AFTER INCOME UPDATED
     %update the system-wide record of whether a layer has open slots or not
-    utilityVariables.hasOpenSlots = countAgentsPerLayer(:,:,indexT) < utilityVariables.nExpected & utilityVariables.hardSlotCountYN | ~utilityVariables.hardSlotCountYN;
+    utilityVariables.hasOpenSlots = countAgentsPerLayer(:,:,indexT) < utilityVariables.nExpected(:,:,indexT) & utilityVariables.hardSlotCountYN | ~utilityVariables.hardSlotCountYN;
 
     %update our time path of trapped agents
     trappedHistory([agentList(:).trapped] > 0,indexT) = 1;
