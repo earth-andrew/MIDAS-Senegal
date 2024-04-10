@@ -320,7 +320,7 @@ incomeForms = utilityForms == 1;
 utilityTimeConstraints = [];
 for indexI = 1:size(timeQs,1)
     utilityTimeConstraints = [utilityTimeConstraints; ...
-        ones(utility_levels,1) * timeQs(1,:)];
+        ones(utility_levels,1) * timeQs(indexI,:)];
 end
 utilityTimeConstraints = [(1:size(utilityTimeConstraints,1))' utilityTimeConstraints];
 
@@ -379,12 +379,12 @@ utilityPrereqs = sparse(utilityPrereqs);
 %all things that rely on them.  This is because of a difference between how
 %the model interprets layers (occupying Q4 means occupying Q4 + all
 %pre-requisites) and the input data (occupying Q4 means only occupying Q4)
-tempExpected = zeros(size(nExpected));
-for indexI = 1:size(nExpected,2)
-   tempExpected(:,indexI) = sum(nExpected(:,utilityPrereqs(:,indexI) > 0),2); 
-end
-nExpected = tempExpected;
 
+%tempExpected = zeros(size(nExpected));
+%for indexI = 1:size(nExpected,2)
+   %tempExpected(:,indexI) = sum(nExpected(:,utilityPrereqs(:,indexI) > 0),2); 
+%end
+%nExpected = tempExpected
 
 %%% OTHER EXAMPLE CODE BELOW HERE
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

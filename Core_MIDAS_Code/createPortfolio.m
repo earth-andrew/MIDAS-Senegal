@@ -216,15 +216,17 @@ if isempty(portfolio)
                 
         end
         
-        aspirationDuration = numPeriodsEvaluate - highfidelityDuration - accumulatingDuration; %Time left to dream about aspirations
-        portfolioSets = [portfolioSets; [aspiration aspirationDuration 0]]; 
+        if any(aspirations)
+            aspirationDuration = numPeriodsEvaluate - highfidelityDuration - accumulatingDuration; %Time left to dream about aspirations
+            portfolioSets = [portfolioSets; [aspiration aspirationDuration 0]];
+        end
         
     %If all randomly generated layers are already selectable, enter
     %Forecasting process
     else
         %Figure out high-fidelity duration based on maximum of the layers' minimum
         %durations
-        duration = max(min(utilityDuration(portfolio',1) - agentExperience(portfolio,1)),0); %Array of minimum time durations for pre-reqs, accounting for experience accumulated
+        duration = max(min((utilityDuration(portfolio',1) - agentExperience(portfolio,1))'),0); %Array of minimum time durations for pre-reqs, accounting for experience accumulated
         highfidelityDuration = min([max(duration) numPeriodsEvaluate]);
         portfolioSets = [portfolio highfidelityDuration 1];
         
@@ -307,9 +309,8 @@ else
     end
 
     %Figure out high-fidelity duration based on maximum of the layers' minimum durations
-    %duration = max(min(utilityDuration(portfolio,1) - agentExperience(portfolio,1)),0); %Array of minimum time durations for pre-reqs, accounting for experience accumulated
-    %highfidelityDuration = min([max(duration) numPeriodsEvaluate]);
-    highfidelityDuration = numPeriodsEvaluate;
+    duration = max(min((utilityDuration(portfolio,1) - agentExperience(portfolio,1))'),0); %Array of minimum time durations for pre-reqs, accounting for experience accumulated
+    highfidelityDuration = min([duration numPeriodsEvaluate]);
     portfolioSets = [portfolio' highfidelityDuration 1];
     
     %Now find a random aspiration (if any) that is enabled by selectable portfolio
@@ -331,7 +332,7 @@ else
 
         %Check for prereqs here
         portfolioPrereqs = j(i == nextAspiration);
-        portfolioPrereqs(portfolioPrereqs== nextAspiration) = [];
+        portfolioPrereqs(portfolioPrereqs == nextAspiration) = [];
             
         %If aspiration is not already in portfolio, but all prereqs are
         if ~portfolio(nextAspiration) && all(portfolio(portfolioPrereqs))

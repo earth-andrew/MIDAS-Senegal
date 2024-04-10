@@ -11,7 +11,7 @@ addpath('./Data');
 rng('shuffle');
 
 runName = 'FarmSeasonality';
-series = ['SenegalDroughtTest_MedianRun'];
+series = ['SenegalBaseCase_MedianRun'];
 saveDirectory = './Outputs/';
 
 input = [];
