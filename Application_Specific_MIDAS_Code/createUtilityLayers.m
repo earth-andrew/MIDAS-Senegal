@@ -48,7 +48,7 @@ iYears = modelParameters.utility_iYears;
 utility_levels = 1;
 utility_layers = table2array(orderedTable);
 numLocations = size(utility_layers,1);
-utility_layers = [utility_layers zeros(numLocations,1) zeros(numLocations,1)]; %Add 2 additional income layers for education - rural/urban
+utility_layers = [utility_layers zeros(numLocations,1) zeros(numLocations,1)]; %Add 2 additional income layers for education - rural and urban
 
 %%%%%%%%%%%%%%%%%%%%%%%
 %%utilityLayerFunctions
@@ -95,7 +95,7 @@ localOnly = [1; ... %ag-aqua rural
     1; %small business urban
     1; ... %trades rural
     1; %trades urban
-    0; ... %education rural
+    0; %education rural
     0; %education urban
 ];
 
@@ -127,7 +127,7 @@ incomeQs =[0 0 0 1; ... %ag-aqua rural
     1 1 1 1; ... %small businesses rural
     1 1 1 1; %small business urban
     1 1 1 1; ... %trades rural
-    1 1 1 1; %trades urban
+    1 1 1 1; ... %trades urban
     1 1 1 1; %education rural
     1 1 1 1];  %education urban
 
@@ -145,7 +145,7 @@ utilityDuration = [8 inf; %ag-aqua rural
     8 inf; %small business urban
     4 inf; %trades rural
     4 inf; %trades urban
-    modelParameters.schoolLength modelParameters.schoolLength %education rural
+    modelParameters.schoolLength modelParameters.schoolLength; %education rural
     modelParameters.schoolLength modelParameters.schoolLength]; %education urban
 
 
@@ -153,7 +153,8 @@ quarterShare = incomeQs ./ (sum(incomeQs,2));
 utilityBaseLayers = ones(height(locations),height(utilityLayerFunctions),timeSteps);
 
 %Read in table of climate-affected locations
-climateTable = readtable(modelParameters.climateFile);
+climateFiles = {'./Data/SenegalRiverDroughtFile.csv'; './Data/SenegalSaltwaterIntrusionFile.csv'};
+climateTable = readtable(climateFiles{modelParameters.climateScenarioIndex});
 climateLocations = climateTable.MIDASIndex; %List of indices for locations affected by climate
 
 for indexI = 1:modelParameters.cycleLength:size(utilityBaseLayers,3)
@@ -167,8 +168,10 @@ for indexI = 1:modelParameters.cycleLength:size(utilityBaseLayers,3)
             %For timespans within climate event period, adjust income for given
             %locations
             if ge(indexI, modelParameters.climateStart) && le(indexI, modelParameters.climateStop)
-                %utilityBaseLayers(climateLocations, modelParameters.climateLayers,indexI) = utilityBaseLayers(climateLocations,modelParameters.climateLayers,indexI) .* (1 - (1 - modelParameters.climateEffect) .* (indexI - modelParameters.climateStart) / (modelParameters.climateStop - modelParameters.climateStart)) ;
-                utilityBaseLayers(climateLocations, modelParameters.climateLayers,indexI) = utilityBaseLayers(climateLocations,modelParameters.climateLayers,indexI) .* 0;
+                utilityBaseLayers(climateLocations, modelParameters.agLayers,indexI) = utilityBaseLayers(climateLocations,modelParameters.agLayers,indexI) .* (1 - modelParameters.agClimateEffect .* (indexI - modelParameters.climateStart) / (modelParameters.climateStop - modelParameters.climateStart)) ;
+                utilityBaseLayers(climateLocations, modelParameters.nonAgLayers,indexI) = utilityBaseLayers(climateLocations,modelParameters.nonAgLayers,indexI) .* (1 - modelParameters.nonAgClimateEffect .* (indexI - modelParameters.climateStart) / (modelParameters.climateStop - modelParameters.climateStart)) ;
+
+                
             end
             
         end
@@ -352,18 +355,18 @@ utilityPrereqs(5,13) = 1; %Professional work in rural or urban space requires ed
 utilityPrereqs(5,14) = 1;
 utilityPrereqs(6,13) = 1;
 utilityPrereqs(6,14) = 1;
-utilityPrereqs(7,13) = 1; %Services requires education in rural or urban setting
-utilityPrereqs(7,14) = 1;
-utilityPrereqs(8,13) = 1;
-utilityPrereqs(8,14) = 1;
-utilityPrereqs(9,13) = 1; %small business require education
-utilityPrereqs(9,14) = 1; 
-utilityPrereqs(10,13) = 1;
-utilityPrereqs(10,14) = 1;
-utilityPrereqs(11,13) = 1; %trades require education
-utilityPrereqs(11,14) = 1; 
-utilityPrereqs(12,13) = 1;
-utilityPrereqs(12,14) = 1;
+%utilityPrereqs(7,13) = 1; %Services requires education in rural or urban setting
+%utilityPrereqs(7,14) = 1;
+%utilityPrereqs(8,13) = 1;
+%utilityPrereqs(8,14) = 1;
+%utilityPrereqs(9,13) = 1; %small business require education
+%utilityPrereqs(9,14) = 1; 
+%utilityPrereqs(10,13) = 1;
+%utilityPrereqs(10,14) = 1;
+%utilityPrereqs(11,13) = 1; %trades require education
+%utilityPrereqs(11,14) = 1; 
+%utilityPrereqs(12,13) = 1;
+%utilityPrereqs(12,14) = 1;
 
 
 

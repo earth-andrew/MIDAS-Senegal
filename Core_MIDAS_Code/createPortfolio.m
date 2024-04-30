@@ -221,6 +221,10 @@ if isempty(portfolio)
             portfolioSets = [portfolioSets; [aspiration aspirationDuration 0]];
         end
         
+        if sum(portfolioSets(:,end-1),1) > numPeriodsEvaluate
+            test = sum(portfolioSets(:,end-1),1)
+            test2 = portfolioSets
+        end
     %If all randomly generated layers are already selectable, enter
     %Forecasting process
     else
@@ -354,6 +358,10 @@ else
     portfolioSets = [portfolioSets; [aspiration aspirationDuration 0]];   
 end
 
+if sum(portfolioSets(:,end-1),1) > numPeriodsEvaluate
+    testForecast = sum(portfolioSets(:,end-1),1)
+    testForecastPortfolio = portfolioSets
+end
 %Test for empty portfolios
 if isempty(portfolio)
     test = 'empty portfolio in createPortfolio'

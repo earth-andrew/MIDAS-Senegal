@@ -353,7 +353,7 @@ for indexL = 1:length(locationList)
 
                 %BAND-AID FIX FOR NOW. DETERMINE WHY END DURATION SOMETIMES
                 %EXCEEDS NUMPERIODSEVALUATE
-                endDuration = min((startDuration + focalPortfolio(indexK, end-1) - 1), agent.numPeriodsEvaluate)
+                endDuration = min((startDuration + focalPortfolio(indexK, end-1) - 1), agent.numPeriodsEvaluate);
                 
                 currentPortfolioValue(startDuration:endDuration) = focalPortfolio(indexK,1:end-2) * portfolioData(:,startDuration:endDuration);
                 startDuration = endDuration + 1;
