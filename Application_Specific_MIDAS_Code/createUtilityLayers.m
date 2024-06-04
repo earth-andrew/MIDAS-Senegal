@@ -45,11 +45,10 @@ noise = modelParameters.utility_noise;
 iReturn = modelParameters.utility_iReturn;
 iDiscount = modelParameters.utility_iDiscount;
 iYears = modelParameters.utility_iYears;
-utility_levels = 1;
-utility_layers = table2array(orderedTable);
+utility_layers = table2array(orderedTable(:,2:end));
 numLocations = size(utility_layers,1);
-utility_layers = [utility_layers zeros(numLocations,1) zeros(numLocations,1)]; %Add 2 additional income layers for education - rural and urban
-
+utility_levels = 3;
+utility_layers = [utility_layers zeros(numLocations,utility_levels)]; %Add additional income layers for education * utility_levels
 %%%%%%%%%%%%%%%%%%%%%%%
 %%utilityLayerFunctions
 %%%%%%%%%%%%%%%%%%%%%%%
@@ -93,12 +92,10 @@ localOnly = [1; ... %ag-aqua rural
     0; %services urban
     1; ... %small business rural
     1; %small business urban
-    1; ... %trades rural
-    1; %trades urban
-    0; %education rural
-    0; %education urban
+    0; ... %trades rural
+    0; %trades urban
+    0; %education
 ];
-
 
 timeQs =[0 .5 .5 0; ... %ag-aqua rural
      0 .5 .5 0; %ag-aqua urban
@@ -112,8 +109,8 @@ timeQs =[0 .5 .5 0; ... %ag-aqua rural
     .5 .5 .5 .5; %small business urban
     .5 .5 .5 .5; ... %trades rural
     .5 .5 .5 .5; %trades urban
-    .75 .75 .75 .75; %education rural
-    .75 .75 .75 .75];  %education urban
+    .75 .75 .75 .75]; %education rural
+   % .75 .75 .75 .75];  %education urban
 
 
 incomeQs =[0 0 0 1; ... %ag-aqua rural
@@ -128,8 +125,8 @@ incomeQs =[0 0 0 1; ... %ag-aqua rural
     1 1 1 1; %small business urban
     1 1 1 1; ... %trades rural
     1 1 1 1; ... %trades urban
-    1 1 1 1; %education rural
-    1 1 1 1];  %education urban
+    1 1 1 1]; %education rural
+   % 1 1 1 1];  %education urban
 
 % N x 2 Matrix specifying the [minimum, maximum] number of cycles that each layer entails
 
@@ -145,11 +142,12 @@ utilityDuration = [8 inf; %ag-aqua rural
     8 inf; %small business urban
     4 inf; %trades rural
     4 inf; %trades urban
-    modelParameters.schoolLength modelParameters.schoolLength; %education rural
-    modelParameters.schoolLength modelParameters.schoolLength]; %education urban
+    modelParameters.schoolLength modelParameters.schoolLength]; %education rural
+   % modelParameters.schoolLength modelParameters.schoolLength]; %education urban
 
 
 quarterShare = incomeQs ./ (sum(incomeQs,2));
+
 utilityBaseLayers = ones(height(locations),height(utilityLayerFunctions),timeSteps);
 
 %Read in table of climate-affected locations
@@ -198,8 +196,6 @@ for indexI = leadTime:-1:1
    utilityBaseLayers(:,:,indexI) = utilityBaseLayers(:,:,indexI+modelParameters.cycleLength); 
 end
 
-
-
 %Converting any NaN's to 0
 utilityBaseLayers(isnan(utilityBaseLayers)) = 0;
 
@@ -229,8 +225,8 @@ utilityAccessCodesMat = false(numCodes,height(utilityLayerFunctions),height(loca
 utilityAccessCosts = [];
 for indexI = 1:height(localOnly)
    if(localOnly(indexI))
-        %meanValues = mean(utilityBaseLayers(:,(indexI-1)*utility_levels+1:indexI*utility_levels,:,:),3);
-        meanValues = mean(utilityBaseLayers(:,indexI,:),3);
+        meanValues = mean(utilityBaseLayers(:,(indexI-1)*utility_levels+1:indexI*utility_levels,:,:),3);
+        %meanValues = mean(utilityBaseLayers(:,indexI,:),3);
         accessCost = meanValues / (1 + iReturn) * ((1+iDiscount)^iYears -1) / iDiscount / ((1 + iDiscount)^iYears);  %using Capital Cost Recovery Factor to estimate access cost
         for indexJ = 1:utility_levels
            utilityAccessCosts = [utilityAccessCosts; [(accessCodeCount:accessCodeCount + height(locations)-1)' accessCost(:,indexJ)]];   
@@ -240,8 +236,8 @@ for indexI = 1:height(localOnly)
            end
         end       
    else
-        %meanValues = mean(mean(utilityBaseLayers(:,(indexI-1)*utility_levels+1:indexI*utility_levels,:,:),3),1);
-        meanValues = mean(mean(utilityBaseLayers(:,indexI,:),3),1);
+        meanValues = mean(mean(utilityBaseLayers(:,(indexI-1)*utility_levels+1:indexI*utility_levels,:,:),3),1);
+        %meanValues = mean(mean(utilityBaseLayers(:,indexI,:),3),1);
         accessCost = meanValues / (1 + iReturn) * ((1+iDiscount)^iYears -1) / iDiscount / ((1 + iDiscount)^iYears);
         for indexJ = 1:utility_levels
            utilityAccessCosts = [utilityAccessCosts; [(accessCodeCount+1) accessCost(indexJ)]];   
@@ -250,7 +246,6 @@ for indexI = 1:height(localOnly)
         end
    end
 end
-
 
 %%%%%%%%%%%%%%%%%
 %nExpected
@@ -269,9 +264,8 @@ numAgentsModel = locationProb * modelParameters.numAgents;
 %'jobs' with fixed slots available, last 15 of 30 are small enterprises
 %without fixed slots
 
-%FIX PROPORTIONS FOR UTILITY_LAYERS_PROP (FOR NOW JUST SET TO
+%ADD CUSTOMIZED UTILITY LAYERS PROP BASED ON INCOME CATEGORIES (FOR NOW JUST SET TO
 %UTILITY_LAYERS. AND CHECK HARDSLOTCOUNT
-
 %nExpected =  (numAgentsModel*ones(1,size(utility_layers_prop,2))) .* utility_layers_prop;
 
 %Set nExpected as a function of place AND time
@@ -280,22 +274,22 @@ nExpected = numAgentsModel .* ones(1,size(utility_layers,2),(leadTime + timeStep
 
 %Add Education-specific proportions
 edTable = readtable(modelParameters.educationFile);
-
+higherEdLayer = 37;
 %First set education slots to 0 for all regions and time slots
-nExpected(:,13:14,:) = numAgentsModel .* zeros(1,2,(leadTime + timeSteps));
+nExpected(:,higherEdLayer,:) = numAgentsModel .* zeros(1,1,(leadTime + timeSteps));
 
 %Then create ed slots by multiply education propotion * total ed slots * 0.5 to distribute between rural and urban layers
-nExpected(edTable.locationIndex,13:14,:) = (edTable.educationProbability .* modelParameters.educationSlots .* 0.5) .* ones(1,2,(leadTime + timeSteps));
+nExpected(edTable.locationIndex,higherEdLayer,:) = (edTable.educationProbability .* modelParameters.educationSlots .* 0.5) .* ones(1,1,(leadTime + timeSteps));
 
-%Now adjust for education expansion scenario if specified
+%Now adjust for education expansion scenario if specified - FIX THIS
 if modelParameters.edExpansionFlag == 1
     expansionTable = readtable(modelParameters.edExpansionFile);
-    nExpected(expansionTable.locationIndex,13:14,(leadTime + modelParameters.edExpansionStart):end) = nExpected(expansionTable.locationIndex,13:14,(leadTime + 1)) + expansionTable.educationProbability .* modelParameters.expansionSlots .* 0.5 .* ones(1,2,(timeSteps + 1 - modelParameters.edExpansionStart)); %Distributing additional slots by geographic location 
+    nExpected(expansionTable.locationIndex,higherEdLayer,(leadTime + modelParameters.edExpansionStart):end) = nExpected(expansionTable.locationIndex,higherEdLayer,(leadTime + 1)) + expansionTable.educationProbability .* modelParameters.expansionSlots .* 0.5 .* ones(1,1,(timeSteps + 1 - modelParameters.edExpansionStart)); %Distributing additional slots by geographic location 
 end
 
 hardSlotCountYN = false(size(nExpected,1:2));
 %Set hard slots for educational opportunities
-hardSlotCountYN(:,13:14) = true;
+hardSlotCountYN(:,higherEdLayer) = true;
 
 %utility layers may be income, use value, etc.  identify what form of
 %utility it is, so that they get added and weighted appropriately in
@@ -310,7 +304,6 @@ utilityForms(1:height(utilityLayerFunctions)) = 1;
 
 %Income form is either 0 or 1 (with 1 meaning income)
 incomeForms = utilityForms == 1;
-
 
 %utilityTimeConstraints: n x (k+1) where n is number of layers and k number of periods in cycle
 % specify the fraction of time for each period in a cycle that a layer
@@ -331,48 +324,37 @@ utilityTimeConstraints = [(1:size(utilityTimeConstraints,1))' utilityTimeConstra
 %progressive investment in a particular line of utility (e.g., farmland)
 utilityPrereqs = zeros(size(utilityTimeConstraints,1));
 
-%for now, no prereqs, but can apply the below code if we want to link 1st
-%through 5th (for example) layers in farming, livestock, etc., to capture
-%the idea of simply growing the enterprise
-
-%let the 2nd Quartile require the 1st, the 3rd require 2nd and 1st, and 4th
-%require 1st, 2nd, and 3rd for every layer source
-% for indexI = 4:4:size(utilityTimeConstraints,1)
-%    utilityPrereqs(indexI, indexI-3:indexI-1) = 1; 
-%    utilityPrereqs(indexI-1, indexI-3:indexI-2) = 1; 
-%    utilityPrereqs(indexI-2, indexI-3) = 1; 
-% end
-
-
+%REDO UTILITY PREREQS NOW THAT WE HAVE MULTIPLE UTILITY LEVELS PER
+%LIVEILHOOD
 %in the form utilityPrereqs('this layer' , 'requires this layer') = 1;
-%utilityPrereqs(2, 1) = 0; %unskilled 2 requires unskilled 1
-%utilityPrereqs(5, 4) = 0; %ag 2 requires ag 1
-%utilityPrereqs(3, 6) = 1; %skilled labor requires school
 
-utilityPrereqs(3,1) = 1; %Livestock in rural space requires ag in rural space
-utilityPrereqs(4,2) = 1; %Livestock in urban space requires ag in urban space
-utilityPrereqs(5,13) = 1; %Professional work in rural or urban space requires education in rural or urban setting
-utilityPrereqs(5,14) = 1;
-utilityPrereqs(6,13) = 1;
-utilityPrereqs(6,14) = 1;
-%utilityPrereqs(7,13) = 1; %Services requires education in rural or urban setting
-%utilityPrereqs(7,14) = 1;
-%utilityPrereqs(8,13) = 1;
-%utilityPrereqs(8,14) = 1;
-%utilityPrereqs(9,13) = 1; %small business require education
-%utilityPrereqs(9,14) = 1; 
-%utilityPrereqs(10,13) = 1;
-%utilityPrereqs(10,14) = 1;
-%utilityPrereqs(11,13) = 1; %trades require education
-%utilityPrereqs(11,14) = 1; 
-%utilityPrereqs(12,13) = 1;
-%utilityPrereqs(12,14) = 1;
+%First get the prereqs needed to "level up"
+for indexL = 1:length(timeQs)
+    base_index = utility_levels * (indexL - 1) + 1; %Specifies index in utilityPrereqs corresponding to "base" layer of each livelihood
+    utilityPrereqs(base_index+1,base_index) = 1;
+    utilityPrereqs(base_index+2,(base_index:base_index+1)) = 1;
+end
 
-
+%Now specify cross-livelihood prereqs (e.g. professional layer requires
+%educational layer)
+utilityPrereqs(7,1) = 1; %Rural livestock (level 1) requires rural ag (level 1)
+utilityPrereqs(10,4) = 1; %Urban livestock (level 1) requires urban ag (level 1)
+utilityPrereqs(13,37) = 1; %Rural professional (level 1) requires education
+utilityPrereqs(17,37) = 1; %Urban professional (level 1) requires education
 
 %each layer 'requires' itself
 utilityPrereqs = utilityPrereqs + eye(size(utilityTimeConstraints,1));
 utilityPrereqs = sparse(utilityPrereqs);
+
+%Adjust utilityDuration to account for multiple income levels for each
+%livelihood activity
+%tempDuration = utilityDuration;
+tempDuration = zeros(utility_levels * size(utilityDuration,1),size(utilityDuration,2));
+for indexL = 1:length(timeQs)
+    base_index = utility_levels * (indexL - 1) + 1; %Specifies index in utilityPrereqs corresponding to "base" layer of each livelihood
+    tempDuration(base_index:(base_index+utility_levels-1),:) = utilityDuration(indexL,:) .* ones(utility_levels,1);
+end
+utilityDuration = tempDuration;
 
 %with these linkages in place, need to account for the fact that in the
 %model, any agent occupying Q4 of something will automatically occupy Q1,
@@ -383,11 +365,13 @@ utilityPrereqs = sparse(utilityPrereqs);
 %the model interprets layers (occupying Q4 means occupying Q4 + all
 %pre-requisites) and the input data (occupying Q4 means only occupying Q4)
 
+%NOTE - COMMENTED OUT AS PREREQS MAY BE SEQUENTIAL, SO AGENTS MAY NOT
+%NECESSARILY BE OCCUPYING BOTH AT SAME TIME
 %tempExpected = zeros(size(nExpected));
 %for indexI = 1:size(nExpected,2)
-   %tempExpected(:,indexI) = sum(nExpected(:,utilityPrereqs(:,indexI) > 0),2); 
+   %tempExpected(:,indexI,:) = sum(nExpected(:,utilityPrereqs(:,indexI) > 0,:),2); 
 %end
-%nExpected = tempExpected
+%nExpected = tempExpected;
 
 %%% OTHER EXAMPLE CODE BELOW HERE
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

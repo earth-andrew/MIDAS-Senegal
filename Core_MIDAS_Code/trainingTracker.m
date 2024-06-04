@@ -20,11 +20,10 @@ function [ currentAgent, backCastNum] = trainingTracker(currentAgent, utilityVar
 
 %Add increment of 1 period experience for each layer in agent's current
 %Portfolio
-numLayers = size(utilityVariables.utilityDuration,1);
+numLayers = size(utilityVariables.utilityLayerFunctions,1);
 currentPortfolio = currentAgent.currentPortfolio(1,1:numLayers)';
 currentAspiration = find(currentAgent.currentAspiration);
 currentAgent.experience = currentAgent.experience + currentPortfolio;
-
 %Check whether agent has achieved any new certifications
 minLength = utilityVariables.utilityDuration(:,1);
 newCerts = find(currentAgent.experience >= minLength);

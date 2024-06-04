@@ -8,7 +8,7 @@ mapParameters.sizeY = 600;
 mapParameters.levelID = '_PCODE';
 mapParameters.levelName = '_FR';
 modelParameters.cycleLength = 4;
-modelParameters.numCycles = 25;
+modelParameters.numCycles = 5;
 modelParameters.incomeInterval = 1;
 modelParameters.visualizeYN = 0;
 modelParameters.listTimeStepYN = 1;
@@ -28,9 +28,10 @@ modelParameters.incomeDraw = randi(100);
 
 %Randomize Utilities Flag
 modelParameters.randomUtilitiesYN = 0; %1 to randomize utilities, 0 to take utilities from data
+modelParameters.medianValuesYN = 1; %1 to work with median income parameters, 0 to work with random draws from distribution
 
 %Climate Parameters
-modelParameters.climateFlag = 1; %1 to impose climate effects
+modelParameters.climateFlag = 0; %1 to impose climate effects
 modelParameters.agClimateEffect = 0.9; %Proportional income loss due to climate impact (0.45 drought; 0.9 saltwater)
 modelParameters.nonAgClimateEffect = 0.276; %Proportional income loss due to climate impact in nonAg sectors (0.138 drought, 0.276 for saltwater)
 modelParameters.climateStart = 1; %Time step at which climate effects start (30 for drought; 1 for saltwater
@@ -81,7 +82,7 @@ modelParameters.samplePortfolios = 100; %Number of example portfolios to create 
 mapParameters.r1 = []; %this will be the spatial reference if we are pulling from a shape file
 mapParameters.saveDirectory = './Outputs/';
 
-mapParameters.filePath = './Data/Senegal Boundary Files Admin 2/Admin_2_lat_lon.shp';
+mapParameters.filePath = './Data/Senegal Boundary Files Admin 2/Admin_2_Senegal.shp';
 modelParameters.popFile = './Data/senegal_population_extract.xls';
 modelParameters.survivalFile = './Data/mortality_sen.xls';
 modelParameters.fertilityFile = './Data/fert_age_sen.xls';
