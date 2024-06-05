@@ -1,4 +1,4 @@
-load SenegalDroughtTest_MedianRun0_26-Mar-2024_16-44-50.mat
+load SenegalBaseCase_MedianRun0_04-Jun-2024_11-53-31.mat
 migCalibration = output;
 
 %load Aspirations_SenegalTest_R1JobsCalibration0_07-Feb-2024_23-52-58.mat
@@ -13,7 +13,7 @@ scenariolist = [migCalibration];
 scenarios= length(scenariolist);
 locations = 45;
 
-jobcats = 14;
+jobcats = 39;
 seasonalthresh = 4; %Number of periods within which a "seasonal migrant" must migrate and make a return trip
 numAgents = height(scenariolist(1).agentSummary(:,1));
 %Create time vector
@@ -34,7 +34,7 @@ cm = colororder;
 
 % Bar Graph of job distribution at terminal time
 X = categorical({'Ag-Aqua R', 'Ag-Aqua U', 'Livestock R', 'Livestock U', 'Professional R', 'Professional U', 'Services R','Services U', 'Trades R','Trades U', 'Small Business R', 'Small Business U', 'Education R', 'Education U'});
-X = reordercats(X, {'Ag-Aqua R', 'Ag-Aqua U', 'Livestock R', 'Livestock U', 'Professional R', 'Professional U', 'Services R','Services U', 'Trades R','Trades U', 'Small Business R', 'Small Business U', 'Education R', 'Education U'});
+%X = reordercats(X, {'Ag-Aqua R', 'Ag-Aqua U', 'Livestock R', 'Livestock U', 'Professional R', 'Professional U', 'Services R','Services U', 'Trades R','Trades U', 'Small Business R', 'Small Business U', 'Education R', 'Education U'});
 Y = [];
 for indexC = 1:1:scenarios
     Y = [Y; jobs(indexC,:,20)];
