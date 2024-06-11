@@ -25,6 +25,7 @@ modelParameters.utility_iReturn = 0.05;
 modelParameters.utility_iDiscount = 0.05;
 modelParameters.utility_iYears = floor(0.5 * modelParameters.numCycles); %Check that this should be 1/2 of number of cycles
 modelParameters.incomeDraw = randi(100);
+modelParameters.testDev = 1;
 
 %Randomize Utilities Flag
 modelParameters.randomUtilitiesYN = 0; %1 to randomize utilities, 0 to take utilities from data
