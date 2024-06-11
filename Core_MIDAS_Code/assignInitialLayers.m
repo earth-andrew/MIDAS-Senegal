@@ -32,7 +32,7 @@ for indexA = 1:length(agentList)
    currentAgent.accessCodesPaid(any(utilityVariables.utilityAccessCodesMat(:,currentAgent.currentPortfolio(1,1:numLayers)', currentAgent.matrixLocation),2)) = true;
    
    currentAgent.firstPortfolio = currentAgent.currentPortfolio;
-   currentAgent = trainingTracker(currentAgent, utilityVariables);
+   currentAgent = trainingTracker(currentAgent, utilityVariables, modelParameters, backCastCount, currentT);
    currentAgent.agentPortfolioHistory{currentT} = currentAgent.currentPortfolio;
    currentAgent.agentAspirationHistory{currentT} = currentAgent.currentAspiration;
    currentAgent.backCastProportion(currentT) = backCastCount; %Since only 1 portfolio is randomly generated, this is either 0 or 1

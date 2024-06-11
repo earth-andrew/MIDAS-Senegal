@@ -419,7 +419,8 @@ for indexL = 1:length(locationList)
             exceedsCreditLimit(indexP) = true;
         end
 
-        
+        testchoosePortfolio3 = agent.currentPortfolio;
+
         if(and(and(locationList(indexL) == agent.matrixLocation, exceedsCreditLimit == true), sum((portfolioSet{indexP}(1,1:size(utilityVariables.utilityHistory,2)) == agent.currentPortfolio(1,1:size(utilityVariables.utilityHistory,2))) == 0) == 0 ))
             %New addition - check that this makes sense
             exceedsCreditLimit(indexP) = false;
@@ -533,12 +534,14 @@ try
 %now that we've paid everything, give the new portfolio to the agent, but
 %only give layers that actually have open slots ... this could be an
 %unlucky agent that shows up and doesn't get what they dreamed of.
+tempPortfolio = bestPortfolio;
 bestPortfolio(1,1:end-2) = utilityVariables.hasOpenSlots(agent.matrixLocation,:) & bestPortfolio(1,1:end-2);
 catch
     f=1;
 end
 
 agent.currentPortfolio = bestPortfolio;
+
 
 if agent.currentPortfolio(end,end) == 0
     agent.currentAspiration = agent.currentPortfolio(end,1:size(utilityVariables.utilityHistory,2));

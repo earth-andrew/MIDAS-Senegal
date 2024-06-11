@@ -1,0 +1,25 @@
+function plotEdHistogram()
+%Function that plots histogram of agents by years (periods) of educational
+%experience
+
+load SenegalDroughtTest_MedianRun0_03-Mar-2024_19-41-13.mat
+baseOutput = output;
+
+numAgents = size(baseOutput.agentSummary,1);
+agentEdExperience = zeros(numAgents,1);
+
+for indexA = 1:numAgents
+    agentEdExperience(indexA,1) = max(baseOutput.agentSummary.experience{indexA,1}(13:14));
+end
+
+%Convert from periods to years
+agentEdExperience = agentEdExperience ./ 4;
+
+%Set edges by year
+edges = [0 0.25 1 2 3 4 4]
+
+h = histogram(agentEdExperience, edges, 'Normalization', 'probability')
+xlabel('Years of Educational Experience', 'FontSize',16)
+
+
+end

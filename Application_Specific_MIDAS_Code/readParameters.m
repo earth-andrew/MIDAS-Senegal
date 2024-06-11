@@ -30,6 +30,9 @@ modelParameters.incomeDraw = randi(100);
 modelParameters.randomUtilitiesYN = 0; %1 to randomize utilities, 0 to take utilities from data
 modelParameters.medianValuesYN = 1; %1 to work with median income parameters, 0 to work with random draws from distribution
 
+%Aspirations Flag
+modelParameters.aspirationsFlag = 0; %0 for no aspirations, 1 to enable aspirations
+
 %Climate Parameters
 modelParameters.climateFlag = 0; %1 to impose climate effects
 modelParameters.agClimateEffect = 0.9; %Proportional income loss due to climate impact (0.45 drought; 0.9 saltwater)
@@ -42,6 +45,7 @@ modelParameters.climateScenarioIndex = 2; %1 for Senegal River Drought, 2 for Sa
 %modelParameters.climateFile = './Data/SenegalRiverDroughtFile.csv';
 
 %Ed Expansion Parameters
+modelParameters.educationLayer = 37; %Layer index for post-secondary education
 modelParameters.educationCost = 47451; 
 modelParameters.educationSlots = 548; %Number of agents that can enroll in tertiary ed at any time
 modelParameters.educationFile = './Data/SenegalEducationProbability.csv'; %Location of existing institutions

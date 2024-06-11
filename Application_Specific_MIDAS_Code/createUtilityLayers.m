@@ -48,7 +48,7 @@ iYears = modelParameters.utility_iYears;
 utility_layers = table2array(orderedTable(:,2:end));
 numLocations = size(utility_layers,1);
 utility_levels = 3;
-utility_layers = [utility_layers zeros(numLocations,utility_levels)]; %Add additional income layers for education * utility_levels
+utility_layers(:,modelParameters.educationLayer:modelParameters.educationLayer+2) = zeros(numLocations,utility_levels); %Add additional income layers for education * utility_levels
 %%%%%%%%%%%%%%%%%%%%%%%
 %%utilityLayerFunctions
 %%%%%%%%%%%%%%%%%%%%%%%
@@ -274,22 +274,22 @@ nExpected = numAgentsModel .* ones(1,size(utility_layers,2),(leadTime + timeStep
 
 %Add Education-specific proportions
 edTable = readtable(modelParameters.educationFile);
-higherEdLayer = 37;
+
 %First set education slots to 0 for all regions and time slots
-nExpected(:,higherEdLayer,:) = numAgentsModel .* zeros(1,1,(leadTime + timeSteps));
+nExpected(:,modelParameters.educationLayer,:) = numAgentsModel .* zeros(1,1,(leadTime + timeSteps));
 
 %Then create ed slots by multiply education propotion * total ed slots * 0.5 to distribute between rural and urban layers
-nExpected(edTable.locationIndex,higherEdLayer,:) = (edTable.educationProbability .* modelParameters.educationSlots .* 0.5) .* ones(1,1,(leadTime + timeSteps));
+nExpected(edTable.locationIndex,modelParameters.educationLayer,:) = (edTable.educationProbability .* modelParameters.educationSlots .* 0.5) .* ones(1,1,(leadTime + timeSteps));
 
 %Now adjust for education expansion scenario if specified - FIX THIS
 if modelParameters.edExpansionFlag == 1
     expansionTable = readtable(modelParameters.edExpansionFile);
-    nExpected(expansionTable.locationIndex,higherEdLayer,(leadTime + modelParameters.edExpansionStart):end) = nExpected(expansionTable.locationIndex,higherEdLayer,(leadTime + 1)) + expansionTable.educationProbability .* modelParameters.expansionSlots .* 0.5 .* ones(1,1,(timeSteps + 1 - modelParameters.edExpansionStart)); %Distributing additional slots by geographic location 
+    nExpected(expansionTable.locationIndex,modelParameters.educationLayer,(leadTime + modelParameters.edExpansionStart):end) = nExpected(expansionTable.locationIndex,modelParameters.educationLayer,(leadTime + 1)) + expansionTable.educationProbability .* modelParameters.expansionSlots .* 0.5 .* ones(1,1,(timeSteps + 1 - modelParameters.edExpansionStart)); %Distributing additional slots by geographic location 
 end
 
 hardSlotCountYN = false(size(nExpected,1:2));
 %Set hard slots for educational opportunities
-hardSlotCountYN(:,higherEdLayer) = true;
+hardSlotCountYN(:,modelParameters.educationLayer) = true;
 
 %utility layers may be income, use value, etc.  identify what form of
 %utility it is, so that they get added and weighted appropriately in
@@ -339,8 +339,8 @@ end
 %educational layer)
 utilityPrereqs(7,1) = 1; %Rural livestock (level 1) requires rural ag (level 1)
 utilityPrereqs(10,4) = 1; %Urban livestock (level 1) requires urban ag (level 1)
-utilityPrereqs(13,37) = 1; %Rural professional (level 1) requires education
-utilityPrereqs(17,37) = 1; %Urban professional (level 1) requires education
+utilityPrereqs(13,modelParameters.educationLayer) = 1; %Rural professional (level 1) requires education
+utilityPrereqs(17,modelParameters.educationLayer) = 1; %Urban professional (level 1) requires education
 
 %each layer 'requires' itself
 utilityPrereqs = utilityPrereqs + eye(size(utilityTimeConstraints,1));
