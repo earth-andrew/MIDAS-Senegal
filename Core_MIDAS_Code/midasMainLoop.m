@@ -8,8 +8,6 @@ tic;
 outputs = [];
 [agentParameters, modelParameters, networkParameters, mapParameters] = readParameters(inputs);
 
-%Draw from income distributions
-reshapeData(modelParameters)
 [agentList, aliveList, modelParameters, agentParameters, mapParameters, utilityVariables, mapVariables, demographicVariables] = buildWorld(modelParameters, mapParameters, agentParameters, networkParameters);
     
 numLocations = size(mapVariables.locations,1);
@@ -50,8 +48,7 @@ for indexT = 1:modelParameters.timeSteps
     %Update average utilities for aspirational portfolios
     utilityVariables.aspirations = aspirationalPortfolio(utilityVariables.utilityBaseLayers(:,:,indexT), modelParameters.samplePortfolios, utilityVariables.utilityPrereqs, utilityVariables.utilityTimeConstraints);
     %update agent age, information and preferences, looping across agents
-    for indexA = 1:length(currentRandOrder)
-        
+    for indexA = 1:length(currentRandOrder)        
         currentAgent = livingAgents(currentRandOrder(indexA));
         currentPortfolio = logical(currentAgent.currentPortfolio(1,1:size(utilityVariables.utilityHistory,2)));
         
@@ -114,7 +111,7 @@ for indexT = 1:modelParameters.timeSteps
                 currentAgent.myIndexInNetwork(end+1) = 1;
                 currentAgent.lastIntendedShareIn(end+1) = 0;
                 
-                newBaby = assignInitialLayers(newBaby, utilityVariables, indexT);
+                newBaby = assignInitialLayers(newBaby, utilityVariables, indexT, modelParameters);
                 
                 mapVariables.network(newBaby.id, currentAgent.id) = 1;
                 mapVariables.network(currentAgent.id, newBaby.id) = 1;
@@ -325,7 +322,7 @@ for indexT = 1:modelParameters.timeSteps
     
     %ANY ACTIONS NECESSARY FOR NEXT TIMESTEP, TO OCCUR AFTER INCOME UPDATED
     %update the system-wide record of whether a layer has open slots or not
-    utilityVariables.hasOpenSlots = countAgentsPerLayer(:,:,indexT) < utilityVariables.nExpected(:,:,indexT) & utilityVariables.hardSlotCountYN | ~utilityVariables.hardSlotCountYN;
+    utilityVariables.hasOpenSlots = countAgentsPerLayer(:,:,indexT) < utilityVariables.nExpected & utilityVariables.hardSlotCountYN | ~utilityVariables.hardSlotCountYN;
 
     %update our time path of trapped agents
     trappedHistory([agentList(:).trapped] > 0,indexT) = 1;

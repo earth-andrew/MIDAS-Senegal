@@ -80,7 +80,6 @@ catch
     
     sizeX = ceil((maxX - minX) + 3 * xMargin) * mapParameters.density;
     sizeY = ceil((maxY - minY) + 3 * yMargin) * mapParameters.density;
- 
     r1 = [mapParameters.density  maxY + yMargin minX - xMargin];
     
     map = zeros(sizeY, sizeX, numLevels + 1);
@@ -151,9 +150,9 @@ catch
         layerNames{end+1} = ['AdminUnit' num2str(indexI-1)];
         idCount = max(max(tempLayer)) + mapParameters.colorSpacing;
     end
-    
+
     [listY,listX] = setpostn(tempMap,r1,[shapeData(:).Latitude],[shapeData(:).Longitude]);
-    
+
     indexLocations = sub2ind([sizeY sizeX], listY, listX);
     
     %now that we are finished, get rid of the top layer used to start the

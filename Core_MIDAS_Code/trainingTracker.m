@@ -17,7 +17,6 @@ function [ currentAgent, backCastNum] = trainingTracker(currentAgent, utilityVar
 %period of training.
 
 [i,j,s] = find(utilityVariables.utilityPrereqs);
-
 %Add increment of 1 period experience for each layer in agent's current
 %Portfolio
 numLayers = size(utilityVariables.utilityLayerFunctions,1);
