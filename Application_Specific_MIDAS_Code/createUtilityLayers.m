@@ -48,7 +48,12 @@ iYears = modelParameters.utility_iYears;
 utility_layers = table2array(orderedTable(:,2:end));
 numLocations = size(utility_layers,1);
 utility_levels = 3;
+
+%Education-specific parameters
+edTable = readtable(modelParameters.educationFile);
 utility_layers(:,modelParameters.educationLayer:modelParameters.educationLayer+2) = zeros(numLocations,utility_levels); %Add additional income layers for education * utility_levels
+utility_layers(edTable.locationIndex,modelParameters.educationLayer) = modelParameters.educationStipend * ones(size(edTable.locationIndex,1),1); 
+
 %%%%%%%%%%%%%%%%%%%%%%%
 %%utilityLayerFunctions
 %%%%%%%%%%%%%%%%%%%%%%%
@@ -151,9 +156,9 @@ quarterShare = incomeQs ./ (sum(incomeQs,2));
 utilityBaseLayers = ones(height(locations),height(utilityLayerFunctions),timeSteps);
 
 %Read in table of climate-affected locations
-climateFiles = {'./Data/SenegalRiverDroughtFile.csv'; './Data/SenegalSaltwaterIntrusionFile.csv'};
-climateTable = readtable(climateFiles{modelParameters.climateScenarioIndex});
-climateLocations = climateTable.MIDASIndex; %List of indices for locations affected by climate
+%climateFiles = {'./Data/SenegalRiverDroughtFile.csv'; './Data/SenegalSaltwaterIntrusionFile.csv'};
+%climateTable = readtable(climateFiles{modelParameters.climateScenarioIndex});
+%climateLocations = climateTable.MIDASIndex; %List of indices for locations affected by climate
 
 for indexI = 1:modelParameters.cycleLength:size(utilityBaseLayers,3)
     if modelParameters.randomUtilitiesYN == 1
@@ -162,17 +167,17 @@ for indexI = 1:modelParameters.cycleLength:size(utilityBaseLayers,3)
     
         utilityBaseLayers(:,:,indexI) = utility_layers;
     
-        if modelParameters.climateFlag == 1
+        %if modelParameters.climateFlag == 1
             %For timespans within climate event period, adjust income for given
             %locations
-            if ge(indexI, modelParameters.climateStart) && le(indexI, modelParameters.climateStop)
-                utilityBaseLayers(climateLocations, modelParameters.agLayers,indexI) = utilityBaseLayers(climateLocations,modelParameters.agLayers,indexI) .* (1 - modelParameters.agClimateEffect .* (indexI - modelParameters.climateStart) / (modelParameters.climateStop - modelParameters.climateStart)) ;
-                utilityBaseLayers(climateLocations, modelParameters.nonAgLayers,indexI) = utilityBaseLayers(climateLocations,modelParameters.nonAgLayers,indexI) .* (1 - modelParameters.nonAgClimateEffect .* (indexI - modelParameters.climateStart) / (modelParameters.climateStop - modelParameters.climateStart)) ;
+            %if ge(indexI, modelParameters.climateStart) && le(indexI, modelParameters.climateStop)
+                %utilityBaseLayers(climateLocations, modelParameters.agLayers,indexI) = utilityBaseLayers(climateLocations,modelParameters.agLayers,indexI) .* (1 - modelParameters.agClimateEffect .* (indexI - modelParameters.climateStart) / (modelParameters.climateStop - modelParameters.climateStart)) ;
+                %utilityBaseLayers(climateLocations, modelParameters.nonAgLayers,indexI) = utilityBaseLayers(climateLocations,modelParameters.nonAgLayers,indexI) .* (1 - modelParameters.nonAgClimateEffect .* (indexI - modelParameters.climateStart) / (modelParameters.climateStop - modelParameters.climateStart)) ;
 
                 
-            end
+            %end
             
-        end
+        %end
     end
 end
 
@@ -247,6 +252,17 @@ for indexI = 1:height(localOnly)
    end
 end
 
+%Education-specific access costs
+
+%First, remove any pre-existing education costs
+utilityAccessCodesMat(:,modelParameters.educationLayer) = 0;
+
+%Then add ed-specific cost to utilityAccessCosts and link this cost to ed
+%Layer in utilityAccessCodesMat
+utilityAccessCosts = [utilityAccessCosts; [(accessCodeCount+1) modelParameters.educationCost]];
+utilityAccessCodesMat(accessCodeCount, modelParameters.educationLayer,edTable.locationIndex) = 1;
+
+
 %%%%%%%%%%%%%%%%%
 %nExpected
 %%%%%%%%%%%%%%%%%
@@ -271,9 +287,6 @@ numAgentsModel = locationProb * modelParameters.numAgents;
 %Set nExpected as a function of place AND time
 nExpected = zeros(size(numAgentsModel,1),size(utility_layers,2),(leadTime + timeSteps));
 nExpected = numAgentsModel .* ones(1,size(utility_layers,2),(leadTime + timeSteps));
-
-%Add Education-specific proportions
-edTable = readtable(modelParameters.educationFile);
 
 %First set education slots to 0 for all regions and time slots
 nExpected(:,modelParameters.educationLayer,:) = numAgentsModel .* zeros(1,1,(leadTime + timeSteps));
@@ -373,5 +386,34 @@ utilityDuration = tempDuration;
 %end
 %nExpected = tempExpected;
 
+
+%%CLIMATE IMPACTS - Implemented Here so that access costs aren't affected%%
+%Read in table of climate-affected locations
+climateFiles = {'./Data/SenegalRiverDroughtFile.csv'; './Data/SenegalSaltwaterIntrusionFile.csv'};
+climateTable = readtable(climateFiles{modelParameters.climateScenarioIndex});
+climateLocations = climateTable.MIDASIndex; %List of indices for locations affected by climate
+
+for indexI = 1:modelParameters.cycleLength:size(utilityBaseLayers,3)
+    if modelParameters.randomUtilitiesYN == 1
+        utilityBaseLayers(:,:,indexI) = 1100000 * rand();
+    else
+    
+        utilityBaseLayers(:,:,indexI) = utility_layers;
+    
+        if modelParameters.climateFlag == 1
+            %For timespans within climate event period, adjust income for given
+            %locations
+            if ge(indexI, modelParameters.climateStart) && le(indexI, modelParameters.climateStop)
+                utilityBaseLayers(climateLocations, modelParameters.agLayers,indexI) = utilityBaseLayers(climateLocations,modelParameters.agLayers,indexI) .* (1 - modelParameters.agClimateEffect .* (indexI - modelParameters.climateStart) / (modelParameters.climateStop - modelParameters.climateStart)) ;
+                utilityBaseLayers(climateLocations, modelParameters.nonAgLayers,indexI) = utilityBaseLayers(climateLocations,modelParameters.nonAgLayers,indexI) .* (1 - modelParameters.nonAgClimateEffect .* (indexI - modelParameters.climateStart) / (modelParameters.climateStop - modelParameters.climateStart)) ;
+
+                
+            end
+            
+        end
+    end
+end
+
 %%% OTHER EXAMPLE CODE BELOW HERE
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+

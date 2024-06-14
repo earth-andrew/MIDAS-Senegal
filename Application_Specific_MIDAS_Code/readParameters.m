@@ -32,7 +32,7 @@ modelParameters.randomUtilitiesYN = 0; %1 to randomize utilities, 0 to take util
 modelParameters.medianValuesYN = 1; %1 to work with median income parameters, 0 to work with random draws from distribution
 
 %Aspirations Flag
-modelParameters.aspirationsFlag = 0; %0 for no aspirations, 1 to enable aspirations
+modelParameters.aspirationsFlag = 1; %0 for no aspirations, 1 to enable aspirations
 
 %Climate Parameters
 modelParameters.climateFlag = 0; %1 to impose climate effects
@@ -40,14 +40,15 @@ modelParameters.agClimateEffect = 0.9; %Proportional income loss due to climate 
 modelParameters.nonAgClimateEffect = 0.276; %Proportional income loss due to climate impact in nonAg sectors (0.138 drought, 0.276 for saltwater)
 modelParameters.climateStart = 1; %Time step at which climate effects start (30 for drought; 1 for saltwater
 modelParameters.climateStop = 100; %time step at which climate effects stop (50 for drought, 100 for saltwater)
-modelParameters.agLayers = [1:4]; %Layers that are affected by ag climate impacts
-modelParameters.nonAgLayers = [5:12]; %Layers affected by non-ag climate impacts
+modelParameters.agLayers = [1:12]; %Layers that are affected by ag climate impacts
+modelParameters.nonAgLayers = [12:36]; %Layers affected by non-ag climate impacts
 modelParameters.climateScenarioIndex = 2; %1 for Senegal River Drought, 2 for Saltwater Intrusion
 %modelParameters.climateFile = './Data/SenegalRiverDroughtFile.csv';
 
 %Ed Expansion Parameters
 modelParameters.educationLayer = 37; %Layer index for post-secondary education
-modelParameters.educationCost = 47451; 
+modelParameters.educationCost = 100000; 
+modelParameters.educationStipend = 500000;
 modelParameters.educationSlots = 548; %Number of agents that can enroll in tertiary ed at any time
 modelParameters.educationFile = './Data/SenegalEducationProbability.csv'; %Location of existing institutions
 modelParameters.edExpansionFlag = 0; %1 to specify education expansion

@@ -374,6 +374,8 @@ for indexT = 1:modelParameters.timeSteps
     end
 end %for indexT = 1:modelParameters.timeSteps
 
+
+
 %prepare outputs
 outputs.averageWealth = averageWealth;
 outputs.countAgentsPerLayer = countAgentsPerLayer;
