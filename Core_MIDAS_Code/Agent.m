@@ -7,30 +7,47 @@ classdef Agent < handle
        matrixLocation
        visX
        visY
-       wealth
-       realizedUtility
        age
        gender
        TOD
        DOB
        trapped
+       layerFlag %Flag for category of layers that are available to agent, based on ID e.g. gender, caste, etc.
+       
        
        %agent accumulated data
        network
        myIndexInNetwork
        accessCodesPaid
        bestPortfolios
+       bestAspirations
+       consideredPortfolios
+       consideredHistory
+       bestFidelity
        bestPortfolioValues
        knowsIncomeLocation
        incomeLayersHistory
+       wealth
+       incomeHistory
+       wealthHistory
+       realizedUtility
+       training
+       diploma
+       experience
        scratch;
        overlap
        heardOpening
        expectedProbOpening
        timeProbOpeningUpdated
+
        %incomeLayersTest
        currentPortfolio
+       currentAspiration
+       currentFidelity
        firstPortfolio
+       agentPortfolioHistory
+       agentAspirationHistory
+       backCastProportion
        personalIncomeHistory
        currentSharedIn
        lastIntendedShareIn

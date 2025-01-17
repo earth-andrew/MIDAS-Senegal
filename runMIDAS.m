@@ -1,20 +1,25 @@
-function mcScriptRun()
+ function mcScriptRun()  
 
 clear functions
 clear classes
 
-addpath('./Core_MIDAS_Code');
-addpath('./Override_Core_MIDAS_Code');
-addpath('./Application_Specific_MIDAS_Code');
+
+%Uncomment Paths if running directly from laptop
+%addpath('./Core_MIDAS_Code');
+%addpath('./Application_Specific_MIDAS_Code');
+%addpath('./Data');
+%addpath('./Outputs');
 
 rng('shuffle');
 
-runName = 'Whatever you want to call this one';
-series = 'MC_Run_';
-saveDirectory = './Outputs/';
+runName = 'FarmSeasonality';
+series = ['SenegalBaseCase_MedianRun'];
+saveDirectory = 'MIDAS-Senegal/Outputs/';
+
+%Uncomment saveDirectory below if saving on local computer
+%saveDirectory = 'Outputs/';
 
 input = [];
-
 
 %this next line runs the MIDAS model
 output = midasMainLoop(input, runName);

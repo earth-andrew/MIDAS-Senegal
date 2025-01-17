@@ -1,16 +1,20 @@
 function [outputs] = midasMainLoop(inputs, runName)
 %runMigrationModel.m main time loop of migration model
 
-
 close all;
 
 tic;
-
 outputs = [];
+
+%Uncomment if running directly from midasMainLoop instead of
+%runMIDASExperiment
+%cd /home/cloud-user/MIDAS-Senegal
+
 [agentParameters, modelParameters, networkParameters, mapParameters] = readParameters(inputs);
 
-[agentList, aliveList, modelParameters, agentParameters, mapParameters, utilityVariables, mapVariables, demographicVariables] = buildWorld(modelParameters, mapParameters, agentParameters, networkParameters);
-    
+%Draw from income distributions
+reshapeData(modelParameters)
+[agentList, aliveList, modelParameters, agentParameters, mapParameters, utilityVariables, mapVariables, demographicVariables] = buildWorld(modelParameters, mapParameters, agentParameters, networkParameters); 
 numLocations = size(mapVariables.locations,1);
 numLayers = size(utilityVariables.utilityLayerFunctions,1);
 
@@ -26,6 +30,8 @@ inMigrations = zeros(numLocations, modelParameters.timeSteps);
 migrationMatrix = zeros(numLocations,numLocations,modelParameters.timeSteps);
 portfolioHistory = cell(numLocations, modelParameters.timeSteps);
 trappedHistory = zeros(length(agentList),modelParameters.timeSteps);
+aspirationHistory = zeros(numLayers, modelParameters.timeSteps);
+%wealthHistory = zeros(modelParameters.numAgents,modelParameters.timeSteps);
 
 %create a list of shared layers, for use in choosing new link
 agentLayers = zeros(length(agentList),size(utilityVariables.utilityLayerFunctions,1));
@@ -44,10 +50,13 @@ for indexT = 1:modelParameters.timeSteps
     livingAgents = agentList(aliveList);
     currentRandOrder = randperm(length(livingAgents));
 
+    %Update average utilities for aspirational portfolios
+    utilityVariables.aspirations = aspirationalPortfolio(utilityVariables.utilityBaseLayers(:,:,indexT), modelParameters.samplePortfolios, utilityVariables.utilityPrereqs, utilityVariables.utilityTimeConstraints);
     %update agent age, information and preferences, looping across agents
     for indexA = 1:length(currentRandOrder)
         
         currentAgent = livingAgents(currentRandOrder(indexA));
+        currentPortfolio = logical(currentAgent.currentPortfolio(1,1:size(utilityVariables.utilityHistory,2)));
         
         %age the agent
         currentAgent.age = currentAgent.age + modelParameters.cyclesPerTimeStep;
@@ -81,8 +90,8 @@ for indexT = 1:modelParameters.timeSteps
         
         %agent gets updated knowledge of any openings available in layers
         %that it occupies
-        currentAgent.heardOpening(currentAgent.matrixLocation,currentAgent.currentPortfolio) = utilityVariables.hasOpenSlots(currentAgent.matrixLocation,currentAgent.currentPortfolio);
-        currentAgent.timeProbOpeningUpdated(currentAgent.matrixLocation,currentAgent.currentPortfolio) = indexT;
+        currentAgent.heardOpening(currentAgent.matrixLocation,currentPortfolio) = utilityVariables.hasOpenSlots(currentAgent.matrixLocation,currentPortfolio);
+        currentAgent.timeProbOpeningUpdated(currentAgent.matrixLocation,currentPortfolio) = indexT;
  
         %draw number to see if (for female agents) agent gives birth
         if(currentAgent.gender == 2 && currentAgent.age >= modelParameters.ageDecision)
@@ -90,8 +99,9 @@ for indexT = 1:modelParameters.timeSteps
             if(agentGivesBirth)
                 gender = 2 - (rand() > 0.5);  %let it be equally likely to be 1 or 2
                 age = 0;
+                
                 %newBaby = initializeAgent(agentParameters, utilityVariables, age, gender, currentAgent.location, agentList(agentParameters.currentID));
-                newBaby = initializeAgent(agentParameters, utilityVariables, age, gender, currentAgent.location);
+                newBaby = initializeAgent(agentParameters, utilityVariables, modelParameters, age, gender, currentAgent.location);
                 newBaby.id = agentParameters.currentID;
                 agentList(agentParameters.currentID) = newBaby;
                 agentParameters.currentID = agentParameters.currentID + 1;
@@ -106,8 +116,7 @@ for indexT = 1:modelParameters.timeSteps
                 currentAgent.network(end+1) = newBaby;
                 currentAgent.myIndexInNetwork(end+1) = 1;
                 currentAgent.lastIntendedShareIn(end+1) = 0;
-                
-                newBaby = assignInitialLayers(newBaby, utilityVariables);
+                newBaby = assignInitialLayers(newBaby, utilityVariables, indexT, modelParameters);
                 
                 mapVariables.network(newBaby.id, currentAgent.id) = 1;
                 mapVariables.network(currentAgent.id, newBaby.id) = 1;
@@ -151,7 +160,7 @@ for indexT = 1:modelParameters.timeSteps
             %create a list of shared layers (in same location) using
             %agentLayers            
             sameLocation = agentLocations == currentAgent.matrixLocation;
-            layerWeight = sparse(ones(sum(sameLocation),1),find(sameLocation), currentAgent.currentPortfolio * agentLayers(sameLocation,:)', 1, length(agentList));
+            layerWeight = sparse(ones(sum(sameLocation),1),find(sameLocation), currentPortfolio * agentLayers(sameLocation,:)', 1, length(agentList));
 
             %identify the new network link using the appropriate function for this
             %simulation
@@ -212,24 +221,28 @@ for indexT = 1:modelParameters.timeSteps
             currentAgent.timeProbOpeningUpdated(temp) = indexT;
         end
         clear temp;
-        
-
+       
         %draw number to see if agent updates preferences on where to
         %be/what to do
+        %% 
+
         if(rand() < currentAgent.pChoose && indexT > modelParameters.spinupTime && currentAgent.age >= modelParameters.ageDecision)
             [currentAgent, moved] = choosePortfolio(currentAgent, utilityVariables, indexT, modelParameters, mapParameters, demographicVariables, mapVariables);
-            
-            
+            currentAgent.agentPortfolioHistory{indexT} = currentAgent.currentPortfolio;
+            currentAgent.agentAspirationHistory{indexT} = currentAgent.currentAspiration;
+            currentAgent.consideredHistory{indexT} = currentAgent.consideredPortfolios;
             if(~isempty(moved))
                 migrations(indexT) = migrations(indexT) + 1;
                 inMigrations(moved(2), indexT) = inMigrations(moved(2), indexT) + 1;
                 outMigrations(moved(1), indexT) = outMigrations(moved(1), indexT) + 1;
                 migrationMatrix(moved(1),moved(2),indexT) = migrationMatrix(moved(1),moved(2),indexT) + 1;
                 currentAgent.moveHistory = [currentAgent.moveHistory; indexT currentAgent.matrixLocation currentAgent.visX currentAgent.visY];
+                
             end
             
             %update these line in the arrays used to choose new links
-            agentLayers(currentAgent.id,:) = currentAgent.currentPortfolio;
+            agentLayers(currentAgent.id,:) = currentAgent.currentPortfolio(1,1:size(utilityVariables.utilityHistory,2));
+            
             agentLocations(currentAgent.id) = currentAgent.matrixLocation;
         end
        
@@ -243,36 +256,22 @@ for indexT = 1:modelParameters.timeSteps
         %each layer
         agentCityIndex = [livingAgents(:).matrixLocation]';
         for indexA = 1:length(livingAgents)
-            currentPortfolio = livingAgents(indexA).currentPortfolio;
+            currentPortfolio = logical(livingAgents(indexA).currentPortfolio(1,1:size(utilityVariables.utilityHistory,2)));
             countAgentsPerLayer(agentCityIndex(indexA), currentPortfolio, indexT) = countAgentsPerLayer(agentCityIndex(indexA), currentPortfolio, indexT) + 1;
         end
         
-        %add income layer to history
         utilityVariables = updateHistory(utilityVariables, modelParameters, indexT, countAgentsPerLayer);
-        
-        %income functions are of the form f(k,m,nExpected,n_actual, base)
-        % - note that this may change depending on the simulation - 
-        %be sure that whatever your income functions are, the cellfun input
-        %matches appropriately
-%         for indexL = 1:numLayers
-%             utilityVariables.utilityHistory(:,indexL, indexT) = arrayfun(utilityVariables.utilityLayerFunctions{indexL}, ...
-%                 mapVariables.locations.locationX, ...
-%                 mapVariables.locations.locationY, ...
-%                 ones(numLocations,1)*indexT, ...
-%                 countAgentsPerLayer(:,indexL, indexT), ...
-%                 utilityVariables.utilityBaseLayers(:,indexL,indexT));
-%         end
-        
+       
         %make payments and transfers as appropriate to all agents, and
         %update knowledge
         for indexA = 1:length(livingAgents)
             currentAgent = livingAgents(indexA);
-            
+            currentPortfolio = logical(currentAgent.currentPortfolio(1,1:size(utilityVariables.utilityHistory,2)));
             %find out how much the current agent made, from each layer, and
             %update their knowledge
-
-            newIncome = sum(utilityVariables.utilityHistory(currentAgent.matrixLocation,currentAgent.currentPortfolio(utilityVariables.incomeForms(currentAgent.currentPortfolio)), indexT));
-
+            newIncome = sum(utilityVariables.utilityHistory(currentAgent.matrixLocation,logical(currentPortfolio .* utilityVariables.incomeForms'), indexT),'all');
+        
+            currentAgent.incomeHistory(indexT) = newIncome;
             
             %add in any income that has been shared in to the agent, to
             %include in sharing-out decision-making
@@ -280,8 +279,8 @@ for indexT = 1:modelParameters.timeSteps
             currentAgent.currentSharedIn = 0;
             currentAgent.personalIncomeHistory(indexT) = newIncome;
             
-            currentAgent.incomeLayersHistory(currentAgent.matrixLocation,currentAgent.currentPortfolio,indexT) = true;
-            currentAgent.knowsIncomeLocation(currentAgent.matrixLocation, currentAgent.currentPortfolio) = true;
+            currentAgent.incomeLayersHistory(currentAgent.matrixLocation,currentPortfolio,indexT) = true;
+            currentAgent.knowsIncomeLocation(currentAgent.matrixLocation, currentPortfolio) = true;
             
             
             %estimate the gross intention of sharing out across network
@@ -322,15 +321,17 @@ for indexT = 1:modelParameters.timeSteps
                 end
             end
             currentAgent.wealth = currentAgent.wealth + newIncome - sum(actualPayments);
+            currentAgent.wealthHistory{indexT} = currentAgent.wealth;
         end
     end %if (mod(indexT, modelParameters.incomeInterval) == 0)
     
     %ANY ACTIONS NECESSARY FOR NEXT TIMESTEP, TO OCCUR AFTER INCOME UPDATED
     %update the system-wide record of whether a layer has open slots or not
-    utilityVariables.hasOpenSlots = countAgentsPerLayer(:,:,indexT) < utilityVariables.nExpected & utilityVariables.hardSlotCountYN | ~utilityVariables.hardSlotCountYN;
+    utilityVariables.hasOpenSlots = countAgentsPerLayer(:,:,indexT) < utilityVariables.nExpected(:,:,indexT) & utilityVariables.hardSlotCountYN | ~utilityVariables.hardSlotCountYN;
 
     %update our time path of trapped agents
     trappedHistory([agentList(:).trapped] > 0,indexT) = 1;
+    %Count number of agents with aspiration for each layer in time T
    
     if (modelParameters.visualizeYN & mod(indexT, modelParameters.visualizeInterval) == 0)
         
@@ -348,10 +349,10 @@ for indexT = 1:modelParameters.timeSteps
 
     end
     
-%     averageWealth(indexT) = mean([livingAgents(:).wealth]);
-%     temp = reshape(cell2mat({livingAgents.expectedProbOpening}), size(livingAgents(1).expectedProbOpening, 1), size(livingAgents(1).expectedProbOpening,2), length(livingAgents));
-%     averageExpectedOpening(:,:,indexT) = mean(temp,3);
-%     clear temp;
+    averageWealth(indexT) = mean([livingAgents(:).wealth],'omitnan');
+    temp = reshape(cell2mat({livingAgents.expectedProbOpening}), size(livingAgents(1).expectedProbOpening, 1), size(livingAgents(1).expectedProbOpening,2), length(livingAgents));
+    averageExpectedOpening(:,:,indexT) = mean(temp,3);
+    clear temp;
 
     %%%%
     %averageExpectedOpening(:,:,indexT) = 0;
@@ -365,7 +366,7 @@ for indexT = 1:modelParameters.timeSteps
     %%%%
     
     if(modelParameters.listTimeStepYN)
-        fprintf([runName ' - Time step ' num2str(indexT) ' of ' num2str(modelParameters.timeSteps) ' - ' num2str(migrations(indexT)) ' migrations.\n']);
+        fprintf([runName ' - Time step ' num2str(indexT) ' of ' num2str(modelParameters.timeSteps) ' - ' num2str(migrations(indexT)) ' migrations across ' num2str(numLivingAgents) ' total agents.\n']);
     end
 
     
@@ -374,6 +375,8 @@ for indexT = 1:modelParameters.timeSteps
        portfolioHistory{indexJ, indexT} = {(agentList([agentList.matrixLocation] == indexJ).currentPortfolio)};
     end
 end %for indexT = 1:modelParameters.timeSteps
+
+
 
 %prepare outputs
 outputs.averageWealth = averageWealth;
@@ -387,6 +390,7 @@ outputs.averageExpectedOpening = averageExpectedOpening;
 outputs.utilityHistory = utilityVariables.utilityHistory;
 outputs.portfolioHistory = portfolioHistory;
 outputs.trappedHistory = trappedHistory;
+outputs.aspirationHistory = aspirationHistory;
 
 agentList = agentList(1:agentParameters.currentID-1);
 agentSummary = table([agentList(:).id]','VariableNames',{'id'});
@@ -408,16 +412,35 @@ agentSummary.bList = [agentList(:).bList]';
 agentSummary.TOD = [agentList(:).TOD]';
 agentSummary.trapped = [agentList(:).trapped]';
 
-
-
 tempCurrentPortfolio = cell(length(agentList),1);
 tempFirstPortfolio = cell(length(agentList),1);
+tempPortfolioHistory = cell(length(agentList),1);
+tempAspirationHistory = cell(length(agentList),1);
+tempBackCastProportion = cell(length(agentList),1);
+tempWealthHistory = cell(length(agentList),1);
+tempIncomeHistory = cell(length(agentList),1);
 tempNetwork = cell(length(agentList),1);
 tempMove = cell(length(agentList),1);
 tempAccess = cell(length(agentList),1);
+tempConsideredHistory = cell(length(agentList),1);
+tempTraining = cell(length(agentList),1);
+tempExperience = cell(length(agentList),1);
+tempDiploma = cell(length(agentList),1);
+tempFlag = cell(length(agentList),1);
+
 for indexI = 1:length(agentList)
     tempCurrentPortfolio{indexI} = agentList(indexI).currentPortfolio;
     tempFirstPortfolio{indexI} = agentList(indexI).firstPortfolio;
+    tempPortfolioHistory{indexI} = agentList(indexI).agentPortfolioHistory;
+    tempAspirationHistory{indexI} = agentList(indexI).agentAspirationHistory;
+    tempBackCastProportion{indexI} = agentList(indexI).backCastProportion;
+    tempConsideredHistory{indexI} = agentList(indexI).consideredHistory;
+    tempTraining{indexI} = agentList(indexI).training;
+    tempExperience{indexI} = agentList(indexI).experience;
+    tempWealthHistory{indexI} = agentList(indexI).wealthHistory;
+    tempIncomeHistory{indexI} = agentList(indexI).incomeHistory;
+    tempDiploma{indexI} = agentList(indexI).diploma;
+    tempFlag{indexI} = agentList(indexI).layerFlag;
     try
     tempNetwork{indexI} = [agentList(indexI).network(:).id];
     catch
@@ -428,9 +451,19 @@ for indexI = 1:length(agentList)
 end
 agentSummary.currentPortfolio = tempCurrentPortfolio;
 agentSummary.firstPortfolio = tempFirstPortfolio;
+agentSummary.portfolioHistory = tempPortfolioHistory;
+agentSummary.aspirationHistory = tempAspirationHistory;
+agentSummary.consideredHistory = tempConsideredHistory;
+agentSummary.backCastProportion = tempBackCastProportion;
 agentSummary.network = tempNetwork;
 agentSummary.moveHistory = tempMove;
 agentSummary.accessCodes = tempAccess;
+agentSummary.training = tempTraining;
+agentSummary.experience = tempExperience;
+agentSummary.wealthHistory = tempWealthHistory;
+agentSummary.incomeHistory = tempIncomeHistory;
+agentSummary.diploma = tempDiploma;
+agentSummary.layerFlag = tempFlag;
 
 outputs.agentSummary = agentSummary;
 

@@ -1,4 +1,4 @@
-function evaluateModelFit()
+function dakarMigrationCalibration()
 
 clear all;
 close all;
@@ -6,8 +6,8 @@ load migData_census2013.mat;
 
 
 quantileMarker = 0.1;
-migrationData = mig_1_region_overall(1:end-1,:);
-averaging_period = 20; %Number of time steps over which to average simulated migration flows
+migrationData = mig_5_region_overall(1:end-1,:);
+averaging_period = 19; %Number of time steps over which to average simulated migration flows (minus 1)
 
 sourcePopWeights = popData' * ones(1, 8);
 destPopWeights = sourcePopWeights';
@@ -22,17 +22,14 @@ jointPopSum = sum(sum(jointPopWeights));
 fracMigsData = migrationData / sum(sum(migrationData));
 
 %another is the migs per total population
-migRateData = migrationData;
-overallMigRate = sum(migRateData,'all') %Overall fraction of migrants
+migRateData = migrationData / sum(popData);
+migRateData = migrationData
+overallMigRate = sum(migRateData,'all'); %Overall fraction of migrants
+test1 = sum(popData)
+test2 = migrationData
 
 %and another is the in/out ratio
 inOutData = sum(migrationData) ./ (sum(migrationData'))';
-
-%Specifically, for Dakar
-DakarInOut = sum(migrationData(:,1)) ./ sum(migrationData(1,:));
-
-%And proportion of all in-migration that goes to Dakar region
-DakarProp = sum(migrationData(:,1)) ./ sum(sum(migrationData,1));
 
 regionNames = {"Dakar", "Ziguinchor", "Diourbel", "Saint Louis, Louga, Matam", ...
     "Tambacounda, Kedougou", "Kaolack, Fatick, Kaffrine", "Thiès", "Kolda, Sedhiou"};
@@ -52,7 +49,7 @@ try
     load evaluationOutputs2
     disp (evaluationOutputs)
 catch
-    fileList = dir('SenegalEnsemble_Calibration_01.07.2025Experiment_*.mat');
+    fileList = dir('SenegalEnsemble_CalibrationExperiment_20*.mat');
     
     inputListRun = [];
     outputListRun = [];
@@ -68,35 +65,18 @@ catch
             fprintf(['Run ' num2str(indexI) ' of ' num2str(length(fileList)) '.\n'])
             
             tempMat = currentRun.output.migrationMatrix;
-            
-            %New code for 5-year migration flows
-            numAgents = height(currentRun.output.agentSummary);
-            numLocations = size(currentRun.output.migrationMatrix,1);
-            numSteps = size(currentRun.output.countAgentsPerLayer,3);
-            tempMat = zeros(numLocations,numLocations);
-            
-            for indexA = 1:numAgents
-                moveMatrix = currentRun.output.agentSummary.moveHistory{indexA,1};
-                currentLocation = moveMatrix(end,2);
-                %Store the last destination of 
-                previousID = find(moveMatrix(:,1) < (numSteps - averaging_period),1,'last');
-                previousLocation = moveMatrix(previousID,2);
-                
-                if previousLocation ~= currentLocation
-                    tempMat(previousLocation,currentLocation) = tempMat(previousLocation,currentLocation) + 1;
-                end
-            end
-
-            tempMat = [sum(tempMat(:,collapseColumns{1}),2) ...
-                sum(tempMat(:,collapseColumns{2}),2) ...
-                sum(tempMat(:,collapseColumns{3}),2) ...
-                sum(tempMat(:,collapseColumns{4}),2) ...
-                sum(tempMat(:,collapseColumns{5}),2) ...
-                sum(tempMat(:,collapseColumns{6}),2) ...
-                sum(tempMat(:,collapseColumns{7}),2) ...
-                sum(tempMat(:,collapseColumns{8}),2) ...
+            tempMat = [sum(tempMat(:,collapseColumns{1},end-averaging_period:end),2) ...
+                sum(tempMat(:,collapseColumns{2},end-averaging_period:end),2) ...
+                sum(tempMat(:,collapseColumns{3},end-averaging_period:end),2) ...
+                sum(tempMat(:,collapseColumns{4},end-averaging_period:end),2) ...
+                sum(tempMat(:,collapseColumns{5},end-averaging_period:end),2) ...
+                sum(tempMat(:,collapseColumns{6},end-averaging_period:end),2) ...
+                sum(tempMat(:,collapseColumns{7},end-averaging_period:end),2) ...
+                sum(tempMat(:,collapseColumns{8},end-averaging_period:end),2) ...
                 ];
             
+            tempMat = sum(tempMat,3);
+             
             tempMat = [sum(tempMat(collapseColumns{1},:)); ...
                 sum(tempMat(collapseColumns{2},:)); ...
                 sum(tempMat(collapseColumns{3},:)); ...
@@ -109,11 +89,11 @@ catch
           
 
             fracMigsRun = tempMat / sum(sum(tempMat));
+            test = sum(sum(tempMat))
             migRateRun = tempMat / size(currentRun.output.agentSummary,1);  %(this data is 11 years)
-            overallMigRateRun = sum(tempMat,"all") / size(currentRun.output.agentSummary,1);
-            modelDakarProp = sum(tempMat(:,1)) ./ sum(sum(tempMat,1));
+            overallMigRateRun = sum(migRateRun,'all')
+            test2 = size(currentRun.output.agentSummary,1)
             inOutRun = sum(tempMat) ./ (sum(tempMat'))';
-            modelDakarInOut = sum(tempMat(:,1)) ./ sum(tempMat(1,:));
             
             fracMigsError = sum(sum((fracMigsRun - fracMigsData).^2));
             sourceWeightFracMigsError = sum(sum(((fracMigsRun - fracMigsData).^2).*sourcePopWeights))/sourcePopSum;
@@ -125,13 +105,6 @@ catch
             destWeightMigRateError = sum(sum(((migRateRun - migRateData).^2).*destPopWeights))/destPopSum;
             jointWeightMigRateError = sum(sum(((migRateRun - migRateData).^2).*jointPopWeights))/jointPopSum;
             
-            %Overall Mig Rate RMSE
-            overallMigRateError =  sqrt((overallMigRateRun - overallMigRate).^2);
-            
-            %Dakar Prop
-            DakarPropError = sqrt((modelDakarProp - DakarProp) .^ 2);
-            DakarInOutError = sqrt((modelDakarInOut - DakarInOut) .^ 2);
-            
             fracMigs_r2 = weightedPearson(fracMigsRun(:), fracMigsData(:), ones(numel(fracMigsRun),1));
             sourceFracMigs_r2 = weightedPearson(fracMigsRun(:), fracMigsData(:), sourcePopWeights(:));
             destFracMigs_r2 = weightedPearson(fracMigsRun(:), fracMigsData(:), destPopWeights(:));
@@ -142,7 +115,6 @@ catch
             destMigRate_r2 = weightedPearson(migRateRun(:), migRateData(:), destPopWeights(:));
             jointMigRate_r2 = weightedPearson(migRateRun(:), migRateData(:), jointPopWeights(:));
             
- 
             inOutError = sum(sum((inOutRun - inOutData).^2));
             popWeightInOutError = sum(sum(((inOutRun - inOutData).^2).*sourcePopWeights))/sourcePopSum;
             inOutError_r2 = weightedPearson(inOutRun(:), inOutData(:), ones(numel(inOutRun),1));
@@ -156,12 +128,12 @@ catch
                 migRateError,sourceWeightMigRateError, destWeightMigRateError, jointWeightMigRateError, ...
                 fracMigs_r2, sourceFracMigs_r2, destFracMigs_r2, jointFracMigs_r2, ...
                 migRate_r2, sourceMigRate_r2, destMigRate_r2, jointMigRate_r2, ...
-                inOutError, popWeightInOutError, inOutError_r2, popInOut_r2, overallMigRateError, DakarPropError, DakarInOutError, ...
+                inOutError, popWeightInOutError, inOutError_r2, popInOut_r2, ...
                 'VariableNames',{'FracMigsError', 'SourceWeightFracMigsError','DestWeightFracMigsError','JointWeightFracMigsError', ...
                 'MigRateError', 'SourceWeightMigRateError','DestWeightMigRateError','JointWeightMigRateError', ...
                 'fracMigs_r2', 'sourceFracMigs_r2', 'destFracMigs_r2', 'jointFracMigs_r2', ...
                 'migRate_r2', 'sourceMigRate_r2', 'destMigRate_r2', 'jointMigRate_r2', ...
-                'inOutError','popWeightInOutError','inOutError_r2','popInOut_r2', 'overallMigRateError', 'DakarPropError', 'DakarInOutError'});
+                'inOutError','popWeightInOutError','inOutError_r2','popInOut_r2'});
             inputListRun = [inputListRun; currentInputRun];
             outputListRun = [outputListRun; currentOutputRun];
             %inputListRun(indexI,:) = currentInputRun
@@ -185,13 +157,12 @@ bestInputs = inputListRun(outputListRun.jointFracMigs_r2 >= minR2,:);
 
 %Sort runs by R2 metric and saves sorted inputs and outputs
 [sortedOutput, sortedIndex] = sortrows(outputListRun, 'jointFracMigs_r2', 'descend');
-r2_metric = sortedOutput(:,{'jointFracMigs_r2','overallMigRateError','DakarPropError', 'DakarInOutError'});
+r2_metric = sortedOutput(:,{'jointFracMigs_r2','jointMigRate_r2'});
 sortedInput = inputListRun(sortedIndex, :);
 migCalibrationTable = [table(sortedIndex, 'VariableNames', {'sortedIndex'}), r2_metric, sortedInput];
-save migrationCalibration_01.07.2025.mat migCalibrationTable;
+save migrationCalibration migCalibrationTable;
 
-expList = dir('experiment_SenegalEnsemble_CalibrationTest_01.13.2025_input_summary_*.mat');
-test = expList(1).name
+expList = dir('experiment_SenegalEnsemble_Calibration*');
 load(expList(1).name);
 
 

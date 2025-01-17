@@ -20,11 +20,10 @@ function [ locations, map, borders, mapParameters ] = createMapFromSHP( mapParam
 %returns a map of each administrative level
 
 %read in the shapefile if necessary
-
 shapeFileName = regexprep(mapParameters.filePath,'.shp','');
 
 try 
-    load([shapeFileName '.mat']);
+    load([mapParameters.filePath '.mat']); %Purposely give it wrong name so that map always re-builds
 catch
     
     fprintf('No processed map found.  Building from shape file (This can take some time)...\n');
@@ -81,7 +80,7 @@ catch
     
     sizeX = ceil((maxX - minX) + 3 * xMargin) * mapParameters.density;
     sizeY = ceil((maxY - minY) + 3 * yMargin) * mapParameters.density;
-    
+ 
     r1 = [mapParameters.density  maxY + yMargin minX - xMargin];
     
     map = zeros(sizeY, sizeX, numLevels + 1);
@@ -152,7 +151,7 @@ catch
         layerNames{end+1} = ['AdminUnit' num2str(indexI-1)];
         idCount = max(max(tempLayer)) + mapParameters.colorSpacing;
     end
-    
+
     [listY,listX] = setpostn(tempMap,r1,[shapeData(:).Latitude],[shapeData(:).Longitude]);
     
     indexLocations = sub2ind([sizeY sizeX], listY, listX);

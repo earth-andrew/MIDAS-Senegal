@@ -55,7 +55,8 @@ for indexI = 1:length(agentList)
                 else %random map
                     %plot them using patchline so that they can be translucent
                     %patchline([startPointsY endPointsY],[startPointsX endPointsX],'EdgeColor',[0 0 0],'EdgeAlpha',fade);
-                    plot([startPointsY endPointsY],[startPointsX endPointsX],'EdgeColor',[0 0 fade]);
+                    %plot([startPointsY endPointsY],[startPointsX endPointsX],'EdgeColor',[0 0 fade]);
+                    plot3([startPointsY endPointsY],[startPointsX endPointsX],(maxColor+1) * ones(size(startPointsY,1),2),'Color',[0 0 0 fade]);
                 end
             
             end

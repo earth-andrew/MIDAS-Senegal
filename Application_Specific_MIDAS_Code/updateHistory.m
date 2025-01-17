@@ -7,7 +7,6 @@ function utilityVariables = updateHistory(utilityVariables, modelParameters, ind
 
 onesList = ones(size(utilityVariables.utilityHistory,1),1);
 
-
 for indexL = 1:size(utilityVariables.utilityHistory,2)
     utilityVariables.utilityHistory(:,indexL, indexT) = arrayfun(utilityVariables.utilityLayerFunctions{indexL}, ...
         onesList*modelParameters.utility_k, ...
