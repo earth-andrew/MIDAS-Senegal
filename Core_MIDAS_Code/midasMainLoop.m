@@ -426,6 +426,7 @@ tempConsideredHistory = cell(length(agentList),1);
 tempTraining = cell(length(agentList),1);
 tempExperience = cell(length(agentList),1);
 tempDiploma = cell(length(agentList),1);
+tempVocational = cell(length(agentList),1);
 tempFlag = cell(length(agentList),1);
 
 for indexI = 1:length(agentList)
@@ -440,6 +441,7 @@ for indexI = 1:length(agentList)
     tempWealthHistory{indexI} = agentList(indexI).wealthHistory;
     tempIncomeHistory{indexI} = agentList(indexI).incomeHistory;
     tempDiploma{indexI} = agentList(indexI).diploma;
+    tempVocational{indexI} = agentList(indexI).vocational;
     tempFlag{indexI} = agentList(indexI).layerFlag;
     try
     tempNetwork{indexI} = [agentList(indexI).network(:).id];
@@ -463,6 +465,7 @@ agentSummary.experience = tempExperience;
 agentSummary.wealthHistory = tempWealthHistory;
 agentSummary.incomeHistory = tempIncomeHistory;
 agentSummary.diploma = tempDiploma;
+agentSummary.vocational = tempVocational;
 agentSummary.layerFlag = tempFlag;
 
 outputs.agentSummary = agentSummary;

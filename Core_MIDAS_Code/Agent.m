@@ -32,6 +32,7 @@ classdef Agent < handle
        wealthHistory
        realizedUtility
        training
+       vocational
        diploma
        experience
        scratch;

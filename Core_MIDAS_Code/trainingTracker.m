@@ -31,9 +31,11 @@ newCerts = find(currentAgent.experience >= minLength);
 currentAgent.training(newCerts) = true;
 
 %If one of those new certifications is education related, note this in the
-%agent's diploma tracker
+%agent's diploma (4-year university) or vocational (2-year) tracker
 if ismember(modelParameters.educationLayer, newCerts)
     currentAgent.diploma = [currentAgent.diploma indexT];
+elseif ismember(modelParameters.educationLayer+1, newCerts)
+    currentAgent.vocational = [currentAgent.vocational indexT];
 end
 
 %Test if agent aspiration is now selectable (if aspirations are turned on)
