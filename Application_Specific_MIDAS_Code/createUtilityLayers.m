@@ -284,6 +284,7 @@ nExpected = numAgentsModel .* ones(1,size(utility_layers,2),(leadTime + timeStep
 
 %First set education slots to 0 for all regions and time slots
 nExpected(:,modelParameters.educationLayer,:) = numAgentsModel .* zeros(1,1,(leadTime + timeSteps));
+nExpected(:,modelParameters.educationLayer+1,:) = numAgentsModel .* zeros(1,1,(leadTime + timeSteps));
 
 %Then create ed slots by multiplying education propotion * total ed slots
 %for both 4-year and vocational schools
@@ -406,7 +407,7 @@ utilityPrereqs(30,28) = 0; %Male business (level 3) does not need male business 
 utilityPrereqs(32,31) = 0; %Female trades (level 2) does not need female trades level 1 (education route)
 utilityPrereqs(35,34) = 0; %Male trades (level 2) does not need male trades level 1 (education route)
 
-
+utilityPrereqs(modelParameters.educationLayer+1,modelParameters.educationLayer) = 0; %Vocational training (index 38) does not need  4-year university (index 37)
 
 %each layer 'requires' itself
 utilityPrereqs = utilityPrereqs + eye(size(utilityTimeConstraints,1));
@@ -420,7 +421,7 @@ for indexL = 1:length(timeQs)
     tempDuration(base_index:(base_index+utility_levels-1),:) = utilityDuration(indexL,:) .* ones(utility_levels,1);
 end
 utilityDuration = tempDuration;
-utilityDuration(modelParameters.educationLayer+1,:) = 2; %Specifies vocational educational layer
+utilityDuration(modelParameters.educationLayer+1,:) = modelParameters.vocationalLength; %Specifies vocational educational layer lasts only 2 years
 
 
 %Adjust utilityRestrictions to account for multiple income levels for each

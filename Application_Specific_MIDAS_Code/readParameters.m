@@ -8,7 +8,7 @@ mapParameters.sizeY = 600;
 mapParameters.levelID = '_PCODE';
 mapParameters.levelName = '_FR';
 modelParameters.cycleLength = 4;
-modelParameters.numCycles = 5;
+modelParameters.numCycles = 25;
 modelParameters.incomeInterval = 1;
 modelParameters.visualizeYN = 0;
 modelParameters.listTimeStepYN = 1;
@@ -59,7 +59,7 @@ modelParameters.edExpansionStart = 1; %Time at which education expansion starts
 modelParameters.edExpansionFile = 'Data/SenegalEducationExpansion.csv'; %Locations of expanded institutions
 modelParameters.expansionSlots = modelParameters.educationSlotsVocational; %Number of additional slots to be created as a result of ed expansion policy
 modelParameters.schoolLength = 16; %Number of time steps to complete post-secondary education
-
+modelParameters.vocationalLength = 8; %Number of time steps to complete vocational training
 
 modelParameters.remitRate = 0;
 modelParameters.creditMultiplier = 0.0316;
