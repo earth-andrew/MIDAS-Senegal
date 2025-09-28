@@ -1,5 +1,6 @@
 function evaluateModelFit()
 
+%Consider pop-weighted RMSE
 clear all;
 close all;
 load migData_census2013.mat;
@@ -21,9 +22,16 @@ jointPopSum = sum(sum(jointPopWeights));
 %pair
 fracMigsData = migrationData / sum(sum(migrationData));
 
+%Set up non-zero frac migs data for taking Mean Absolute Percentage Error
+nzFracMigsData = fracMigsData;
+nzFracMigsData(nzFracMigsData == 0) = NaN;
+%indices = find(isnan(nzFracMigsData));
+%[I,J] = ind2sub(size(nzFracMigsData),indices);
+
+
 %another is the migs per total population
 migRateData = migrationData;
-overallMigRate = sum(migRateData,'all') %Overall fraction of migrants
+overallMigRate = sum(migRateData,'all'); %Overall fraction of migrants
 
 %and another is the in/out ratio
 inOutData = sum(migrationData) ./ (sum(migrationData'))';
@@ -52,7 +60,7 @@ try
     load evaluationOutputs2
     disp (evaluationOutputs)
 catch
-    fileList = dir('SenegalEnsemble_Calibration_01.07.2025Experiment_*.mat');
+    fileList = dir('SenegalEnsemble_Calibration_02.08.2025Experiment_*.mat');
     
     inputListRun = [];
     outputListRun = [];
@@ -68,6 +76,13 @@ catch
             fprintf(['Run ' num2str(indexI) ' of ' num2str(length(fileList)) '.\n'])
             
             tempMat = currentRun.output.migrationMatrix;
+
+            %Take logarithm of flows to account for skewed distribution
+            %(but set 0 flows to NaN) - BUT THIS WILL BE DIFFERENT FOR EACH
+            %RUN
+            %logTempMat = tempMat;
+            %logTempMat(logTempMat==0) = NaN;
+            %logTempMat = log(logTempMat);
             
             %New code for 5-year migration flows
             numAgents = height(currentRun.output.agentSummary);
@@ -136,6 +151,8 @@ catch
             sourceFracMigs_r2 = weightedPearson(fracMigsRun(:), fracMigsData(:), sourcePopWeights(:));
             destFracMigs_r2 = weightedPearson(fracMigsRun(:), fracMigsData(:), destPopWeights(:));
             jointFracMigs_r2 = weightedPearson(fracMigsRun(:), fracMigsData(:), jointPopWeights(:));
+            jointFracRMSE = sqrt(sum(sum(jointPopWeights .* (fracMigsRun - fracMigsData).^2) / sum(jointPopWeights)));
+            fracMigsMAPE = sum(sum(abs(fracMigsRun - nzFracMigsData) ./ nzFracMigsData,"omitnan"),"omitnan") ./ numel(nzFracMigsData);
             
             migRate_r2 = weightedPearson(migRateRun(:), migRateData(:), ones(numel(migRateRun),1));
             sourceMigRate_r2 = weightedPearson(migRateRun(:), migRateData(:), sourcePopWeights(:));
@@ -154,12 +171,12 @@ catch
 
             currentOutputRun = table(fracMigsError,sourceWeightFracMigsError, destWeightFracMigsError, jointWeightFracMigsError, ...
                 migRateError,sourceWeightMigRateError, destWeightMigRateError, jointWeightMigRateError, ...
-                fracMigs_r2, sourceFracMigs_r2, destFracMigs_r2, jointFracMigs_r2, ...
+                fracMigs_r2, sourceFracMigs_r2, destFracMigs_r2, jointFracMigs_r2,jointFracRMSE, fracMigsMAPE, ...
                 migRate_r2, sourceMigRate_r2, destMigRate_r2, jointMigRate_r2, ...
                 inOutError, popWeightInOutError, inOutError_r2, popInOut_r2, overallMigRateError, DakarPropError, DakarInOutError, ...
                 'VariableNames',{'FracMigsError', 'SourceWeightFracMigsError','DestWeightFracMigsError','JointWeightFracMigsError', ...
                 'MigRateError', 'SourceWeightMigRateError','DestWeightMigRateError','JointWeightMigRateError', ...
-                'fracMigs_r2', 'sourceFracMigs_r2', 'destFracMigs_r2', 'jointFracMigs_r2', ...
+                'fracMigs_r2', 'sourceFracMigs_r2', 'destFracMigs_r2', 'jointFracMigs_r2','jointFracRMSE','fracMigsMAPE', ...
                 'migRate_r2', 'sourceMigRate_r2', 'destMigRate_r2', 'jointMigRate_r2', ...
                 'inOutError','popWeightInOutError','inOutError_r2','popInOut_r2', 'overallMigRateError', 'DakarPropError', 'DakarInOutError'});
             inputListRun = [inputListRun; currentInputRun];
@@ -184,13 +201,13 @@ minR2 = quantile(outputListRun.jointFracMigs_r2,[1 - quantileMarker]);
 bestInputs = inputListRun(outputListRun.jointFracMigs_r2 >= minR2,:);
 
 %Sort runs by R2 metric and saves sorted inputs and outputs
-[sortedOutput, sortedIndex] = sortrows(outputListRun, 'jointFracMigs_r2', 'descend');
-r2_metric = sortedOutput(:,{'jointFracMigs_r2','overallMigRateError','DakarPropError', 'DakarInOutError'});
+[sortedOutput, sortedIndex] = sortrows(outputListRun, 'jointFracRMSE', 'ascend');
+r2_metric = sortedOutput(:,{'jointFracRMSE','fracMigsMAPE', 'jointFracMigs_r2','overallMigRateError','DakarPropError', 'DakarInOutError'});
 sortedInput = inputListRun(sortedIndex, :);
 migCalibrationTable = [table(sortedIndex, 'VariableNames', {'sortedIndex'}), r2_metric, sortedInput];
-save migrationCalibration_01.07.2025.mat migCalibrationTable;
+save migrationCalibration_07.10.2025.mat migCalibrationTable;
 
-expList = dir('experiment_SenegalEnsemble_CalibrationTest_01.13.2025_input_summary_*.mat');
+expList = dir('experiment_SenegalEnsemble_Calibration_06.16.2025_input_summary_*.mat');
 test = expList(1).name
 load(expList(1).name);
 

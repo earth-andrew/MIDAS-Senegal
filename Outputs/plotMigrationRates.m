@@ -1,35 +1,17 @@
 function plotMigrationRates()
 %% Plot Migration over Time
-%load NoAspirations_06.23.2024.mat
-%nullOutput = outputList;
-
-load ReferenceCase_01.14.2025.mat
-multiObjectiveOutput = outputList;
-
-%load Reference_MigrationFlowsCalibration_11.17.2024.mat
-%migrationOutput = outputList;
-
-%load Reference_JobDistributionCalibration_11.17.2024.mat
-%jobOutput = outputList;
-
-%load Reference_EducationCalibration_11.17.2024.mat
-%edOutput = outputList;
-
-load SenegalRiverDrought_01.14.2025.mat
-droughtOutput = outputList;
-
-load SaltwaterIntrusion_01.14.2025.mat
-saltwaterOutput = outputList;
-
-load GroundnutBasinDrought_01.14.2025.mat
-groundwaterOutput = outputList;
-
-load NoAspirations_01.14.2025.mat
+load NoAspirations_07.06.2025.mat
 nullOutput = outputList;
 
+load ReferenceCase_07.06.2025.mat
+multiObjectiveOutput = outputList;
 
-%load SaltwaterIntrusion_EdExpansion_MultiObjectiveCalibration_12.05.2024.mat
-%saltwaterExpansionOutput = outputList;
+load SenegalRiverDrought_07.06.2025.mat
+droughtOutput = outputList;
+
+load SaltwaterIntrusion_07.06.2025.mat
+saltwaterOutput = outputList;
+
 
 droughtStart = 30/4; %Time step at which drought starts
 droughtEnd = 50/4; %Time step at which drought ends
@@ -37,16 +19,17 @@ droughtEnd = 50/4; %Time step at which drought ends
 %Specify specific departments to analyze for regional rates
 droughtDepartments = [1 6 17 27 35 37 39]; 
 
-scenarios = [multiObjectiveOutput, droughtOutput, saltwaterOutput, groundwaterOutput, nullOutput];
-scenarios = [multiObjectiveOutput, nullOutput];
-
+scenarios = [multiObjectiveOutput, nullOutput, droughtOutput, saltwaterOutput];
+%scenarios = [multiObjectiveOutput];
 numScenarios = size(scenarios,2);
-%numExpansionScenarios = size(expansionScenarios,2);
+
 colors = {[0.6350 0.0780 0.1840]; [0, 0.4470, 0.7410]; [0.4660, 0.6740, 0.1880]; [0.4940, 0.1840, 0.5560]; [0.8500 0.3250 0.0980]; [0.9290 0.6940 0.1250]; [0.3010 0.7450 0.9330]};
-colors = {[0.6350 0.0780 0.1840]; [0.8500 0.3250 0.0980]; [0.9290 0.6940 0.1250]; [0.3010 0.7450 0.9330]};
+%colors = {[0.6350 0.0780 0.1840];[0.4660, 0.6740, 0.1880]; [0.4940, 0.1840, 0.5560]; [0.8500 0.3250 0.0980]; [0.9290 0.6940 0.1250]; [0.3010 0.7450 0.9330]};
+
 lineStyles = {'-'; '--'; ':'};
 runs = size(scenarios,1);
 steps = size(scenarios(1).migrations,1);
+steps = 90;
 time = 1:steps;
 lag = 4; %Number of time steps over which to aggregate migration rates
 
@@ -61,10 +44,6 @@ regionalOutMigrations = zeros(steps, runs);
 regionalNetMigrations = zeros(steps, runs);
 avgRegionalNetMigrations = zeros(numScenarios,steps);
 stdRegionalNetMigrations = zeros(numScenarios,steps);
-
-simExpansionMigrations = zeros(steps,runs);
-%avgExpansionMigration = zeros(numExpansionScenarios,steps);
-%stdExpansionMigration = zeros(numExpansionScenarios,steps);
 
 %Calculate number of agents with diploma at each time step
 simDiploma = zeros(steps,runs);
@@ -82,21 +61,15 @@ for indexR = 1:runs
    %regionalOutMigrations(:,indexR) = sum(scenarios(indexR,1).migrationMatrix(droughtDepartments,:,:),[1,2]);
    %regionalInMigrations(:,indexR) = sum(scenarios(indexR,1).migrationMatrix(:,droughtDepartments,:),[1,2]);
    %regionalNetMigrations = regionalOutMigrations / regionalInMigrations;
-   
-   %numExpansionAgents = height(expansionScenarios(indexR,1).diplomas);
-   %simExpansionMigrations(:,indexR) = expansionScenarios(indexR,1).migrations / numExpansionAgents;
 end
 
 
 
 avgMigration(1,:) = mean(movavgSimMigrations,2);
-test = avgMigration(1,end)
-%avgExpansionMigration(1,:) = mean(simExpansionMigrations,2);
-%avgRegionalNetMigrations(1,:) = mean(regionalNetMigrations,2);
+migrationRate = avgMigration(1,end)
     
 %Calculate std using N-1 degrees of freedom
 stdMigration(1,:) = std(movavgSimMigrations,0,2);
-%stdExpansionMigration(1,:) = std(simExpansionMigrations,0,2);
 
 y_low = avgMigration(1,:) - stdMigration(1,:);
 y_high = avgMigration(1,:) + stdMigration(1,:);
@@ -117,23 +90,16 @@ for indexS = 2:numScenarios
     %Calculate average migration at each time step
     simMigrations = zeros(steps, runs);
     movavgSimMigrations = zeros(steps,runs);
-    %simExpansionMigrations = zeros(steps,runs);
-    %avgMigration(indexS,:) = zeros(steps,1);
-    %stdMigration(indexS,:) = zeros(steps,1);
 
     for indexR = 1:runs
         numAgents = height(scenarios(indexR,indexS).diplomas);
         simMigrations(:,indexR) = scenarios(indexR,indexS).migrations / numAgents;
         movavgSimMigrations(:,indexR) = movavg(simMigrations(:,indexR),'simple',lag) .* lag;
        
-        %numExpansionAgents = height(expansionScenarios(indexR,indexS).diplomas);
-        %simExpansionMigrations(:,indexR) = expansionScenarios(indexR,indexS).migrations / numExpansionAgents;
-        
     end
 
     avgMigration(indexS,:) = mean(movavgSimMigrations,2);
-    test = avgMigration(indexS,end)
-    %avgExpansionMigration(indexS,:) = mean(simExpansionMigrations,2);
+    migrationRate = avgMigration(indexS,end)
     
     %Calculate std using N-1 degrees of freedom
     stdMigration(indexS,:) = std(movavgSimMigrations,0,2);
@@ -158,26 +124,113 @@ ax.FontSize = 16;
 xlabel('Years','FontSize',16)
 ylabel('Proportion of Agents Migrating','FontSize',16)
 xlim([9/4,steps/4])
-%legend({'Reference Case', 'SenegalRiverDrought', 'Saltwater Intrusion', 'Groundnut Basin Drought', 'No Aspirations'},'FontSize',14,'Location','northwest')
-legend({'Reference Case', 'No Aspirations'},'FontSize',14,'Location','northwest')
+legend({'Reference Case', 'No Aspirations', 'SenegalRiverDrought', 'Saltwater Intrusion'},'FontSize',14,'Location','northwest')
+saveas(gcf, 'MigrationRates_07.06.2025.png')
 
-saveas(gcf, 'BaseCaseMigrationRates_01.15.2025.png')
+%% Plot Migration Rate Relative to Reference Case
+lag = 4;
+spinUp = 10;
+droughtStart = 28/4; %Time step at which drought starts
+droughtEnd = 48/4; %Time step at which drought ends
+referenceMigration = avgMigration(1,:);
+stdReferenceMigration = stdMigration(1,:);
+migrationDifferential = zeros(numScenarios,steps);
+highDifferential = zeros(numScenarios,steps);
+lowDifferential = zeros(numScenarios,steps);
+movMigationDifferential = zeros(numScenarios,steps);
+movHighDifferential = zeros(numScenarios,steps);
+movLowDifferential = zeros(numScenarios,steps);
 
-%% 
+for indexE = 1:numScenarios
+    
+    migrationDifferential(indexE,:) = (avgMigration(indexE,:) - referenceMigration) ./ referenceMigration .* 100;
+    highDifferential(indexE,:) = (avgMigration(indexE,:) + stdMigration(indexE,:) - (referenceMigration + stdReferenceMigration)) ./ referenceMigration .* 100;
+    lowDifferential(indexE,:) = (avgMigration(indexE,:) - stdMigration(indexE,:) - (referenceMigration - stdReferenceMigration)) ./ referenceMigration .* 100;
+    movMigrationDifferential(indexE,:) = (movavg(migrationDifferential(indexE,:)','simple',lag) .* lag)';
+    movHighDifferential(indexE,:) = (movavg(highDifferential(indexE,:)','simple',lag) .* lag)';
+    movLowDifferential(indexE,:) = (movavg(lowDifferential(indexE,:)','simple',lag) .* lag)';
+    
+end
 
-%% %% %% Plot Migration Flow Chord Diagram
+test = migrationDifferential;
+
+colors = {[0.6350 0.0780 0.1840]; [0, 0.4470, 0.7410]; [0.4660, 0.6740, 0.1880]; [0.4940, 0.1840, 0.5560]; [0.8500 0.3250 0.0980]; [0.9290 0.6940 0.1250]; [0.3010 0.7450 0.9330]};
+
+
+time = 1:steps;
+x = (time-spinUp) ./ 4;
+
+
+plot(x, migrationDifferential(3,:),'Color',colors{3},'LineWidth',2);
+
+hold on
+for indexE = 4:numScenarios
+    plot(x,migrationDifferential(indexE,:),'Color',colors{indexE},'LineWidth',2);
+end
+
+ax = gca;
+ax.FontSize = 16;
+xlim([11/4,(steps-spinUp)/4])
+xlabel('Years','FontSize',16)
+ylabel('Percent Change in Migration Rate from Reference Case','FontSize',16)
+yline(0,'--','LineWidth',2,'Color','black','FontSize',20)
+xline([droughtStart droughtEnd], '--',{'Start of Drought', 'End of Drought'},'LineWidth', 2, 'Color', '#A2142F','LabelVerticalAlignment', 'bottom', 'FontSize', 20);
+legend({'SenegalRiverDrought', 'Saltwater Intrusion'},'FontSize',14,'Location','northeast')
+
+saveas(gcf, 'MigrationDeviation_07.06.2025.png')
+
+
+
+
+%% Plot Unique Agents Migrating in a Time Window
+
+load GroundnutBasinDrought_03.13.2025.mat
+multiObjectiveOutput = outputList;
+scenarios = [multiObjectiveOutput];
+runs = size(scenarios,1);
+steps = size(multiObjectiveOutput(1).migrations,1);
+spinUp = 10;
+lag = 4; %Number of time steps over which to calculate migration rate
+agentMoves = zeros(runs, steps);
+
+for indexR = 1:runs
+    numAgents = height(scenarios(indexR,1).diplomas);
+    moveHistory = scenarios(indexR,1).moveHistory;
+    
+    for indexT = spinUp+1:steps
+        count = 0;
+        if indexT < lag+spinUp
+            lowerBound = spinUp+1;
+        else
+            lowerBound = indexT - lag;
+        end
+        
+        for indexA = 1:numAgents
+            if any(moveHistory{indexA,1}(:,1) >= lowerBound & moveHistory{indexA,1}(:,1) < indexT)
+                count = count + 1;
+            end
+        end
+        
+        agentMoves(indexR, indexT) = count ./ numAgents;
+    end
+
+end
+
+avgMoves = mean(agentMoves,1);
+
+test = avgMoves;
+
+%% %% %% Plot Model Migration Flow Chord Diagram
 clear all
-load SenegalReferenceCase_12.06.2024.mat
+load ReferenceCase_07.06.2025.mat
 output = outputList;
 
 runs = size(output,1);
-steps = size(output(1).migrations,1);
 
-popChange = zeros(runs,45);
 
 %Specify start and end of time series slice to calculate migration flows
-start_time = 60;
-end_time = 80;
+start_time = 40;
+end_time = 60;
 
 %Collapse matrix into 8 x 8 matrix of Admin 1 regions
 placeLabels = {"Dakar", "Ziguinchor", "Diourbel", "Saint Louis, Louga, Matam", ...
@@ -225,9 +278,13 @@ for indexR = 1:runs
                 sum(tempMat(collapseColumns{8},:)) ...
                 ];
 
+    %Remove diagonals to match data - ask Andrew why data did not have diagonals
+    tempMat = tempMat - diag(diag(tempMat));
+
     %Calculate proportional migration matrix for each run
     fracMigsRun = zeros(height(tempMat), height(tempMat),runs);
-
+    
+    
     fracMigs(:,:,indexR) = tempMat / sum(sum(tempMat));
 
     %Calculate net population change for each Admin 2 region
@@ -237,6 +294,7 @@ for indexR = 1:runs
 
 
 end
+
 avgFracMigs = mean(fracMigs,3)
 
 %save('BaseCaseMigMatrix', "avgFracMigs")
@@ -247,8 +305,35 @@ BCC.tickState('off')
 BCC.setFont('FontName', 'Cambria', 'FontSize', 17)
 BCC.setLabelRadius(1.3);
 BCC.tickLabelState('off')
+
+%% Plot Data 5-year migration chord diagram
+addpath '../Calibration Testing/'
+
+load migData_census2013.mat;
+%one simple metric is the relative # of migrations per source-destination
+%pair
+migrationData = mig_5_region_overall(1:end-1,:);
+
+fracMigsData = migrationData / sum(sum(migrationData))
+
+%Collapse matrix into 8 x 8 matrix of Admin 1 regions
+placeLabels = {"Dakar", "Ziguinchor", "Diourbel", "Saint Louis, Louga, Matam", ...
+    "Tambacounda, Kedougou", "Kaolack, Fatick, Kaffrine", "Thiès", "Kolda, Sedhiou", ...
+    "Abroad", "NIU"};
+
+
+regionNames = {"Dakar", "Ziguinchor", "Diourbel", "Saint Louis, Louga, Matam", ...
+    "Tambacounda, Kedougou", "Kaolack, Fatick, Kaffrine", "Thiès", "Kolda, Sedhiou"};
+    
+BCC=biChordChart(fracMigsData,'Label',regionNames,'Arrow','on');
+BCC = BCC.draw();
+BCC.tickState('off')
+BCC.setFont('FontName', 'Cambria', 'FontSize', 17)
+BCC.setLabelRadius(1.3);
+BCC.tickLabelState('off')
+
 %% Calculate Population Change for each location
-load GroundnutBasinDrought_01.14.2025.mat
+load ReferenceCase_07.06.2025.mat
 scenario = outputList;
 numRuns = size(scenario,1);
 numLocations = size(scenario(1).agentJobDistribution,1);
@@ -260,8 +345,8 @@ avgPropChange = zeros(numLocations,1);
 
 %Calculate starting and ending populations by location
 for indexR = 1:numRuns
-    startPop(:,indexR) = sum(scenario(indexR).agentJobDistribution(:,:,1),2) ./ sum(scenario(indexR).agentJobDistribution(:,:,1),'all');
-    endPop(:,indexR) = sum(scenario(indexR).agentJobDistribution(:,:,end),2) ./ sum(scenario(indexR).agentJobDistribution(:,:,end),'all');
+    startPop(:,indexR) = sum(mean(scenario(indexR).agentJobDistribution(:,:,1:10),3),2) ./ sum(mean(scenario(indexR).agentJobDistribution(:,:,1:10),3),'all');
+    endPop(:,indexR) = sum(mean(scenario(indexR).agentJobDistribution(:,:,80:90),3),2) ./ sum(mean(scenario(indexR).agentJobDistribution(:,:,80:90),3),'all');
 end
 
 %Calculate mean of differences between endPop and startPop across runs
@@ -275,22 +360,25 @@ popChangeTable = table(MatrixID, avgPopChange);
 %Merging with place codebook
 codebook = readtable('../Data/PlaceIndexCodebook.csv');
 joinedTable = join(popChangeTable, codebook)
-writetable(joinedTable, 'GroundnutBasinDroughtPopChange_01.15.2025.csv')
+writetable(joinedTable, 'ReferenceCasePopChange_07.06.2025_80-90.csv')
 %% Calculate difference in populations between two scenarios
-load ReferenceCase_01.14.2025.mat
+load ReferenceCase_07.06.2025.mat
 multiObjectiveOutput = outputList;
 
-load SenegalRiverDrought_01.14.2025.mat
+load SenegalRiverDrought_07.06.2025.mat
 droughtOutput = outputList;
 
-load SaltwaterIntrusion_01.14.2025.mat
+load SaltwaterIntrusion_07.06.2025.mat
 saltwaterOutput = outputList;
 
-load GroundnutBasinDrought_01.14.2025.mat
-groundnutOutput = outputList;
+%load GroundnutBasinDrought_02.08.2025.mat
+%groundnutOutput = outputList;
 
 scenario1 = multiObjectiveOutput;
-scenario2 = groundnutOutput;
+scenario2 = saltwaterOutput;
+
+start_time = 20;
+end_time = 30;
 
 numRuns = size(scenario1,1);
 numLocations = size(scenario1(1).agentJobDistribution,1);
@@ -299,8 +387,8 @@ scenario2Distribution = zeros(numLocations,numRuns);
 avgPopDiff = zeros(numLocations,numRuns);
 
 for indexR = 1:numRuns
-    scenario1Distribution(:,indexR) = sum(scenario1(indexR).agentJobDistribution(:,:,end),2) ./ sum(scenario1(indexR).agentJobDistribution(:,:,end),'all');
-    scenario2Distribution(:,indexR) = sum(scenario2(indexR).agentJobDistribution(:,:,end),2) ./ sum(scenario2(indexR).agentJobDistribution(:,:,end),'all');
+    scenario1Distribution(:,indexR) = sum(mean(scenario1(indexR).agentJobDistribution(:,:,start_time:end_time),3),2) ./ sum(mean(scenario1(indexR).agentJobDistribution(:,:,start_time:end_time),3),'all');
+    scenario2Distribution(:,indexR) = sum(mean(scenario2(indexR).agentJobDistribution(:,:,start_time:end_time),3),2) ./ sum(mean(scenario2(indexR).agentJobDistribution(:,:,start_time:end_time),3),'all');
 end
 
 %Calculate DMean Distributions and Difference between scenarios
@@ -317,7 +405,7 @@ popDiffTable = table(MatrixID,avgPopDiff)
 codebook = readtable('../Data/PlaceIndexCodebook.csv');
 joinedTable = join(popDiffTable,codebook);
 
-writetable(joinedTable,'GroundnutBasinDroughtPopDiff_01.15.2025.csv')
+writetable(joinedTable,'SaltwaterPopDiff_20-30_07.06.2025.csv')
 
 
 

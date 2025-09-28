@@ -6,13 +6,12 @@ function [] = reshapeData(modelParameters)
 
 %Decide on median income values or random income draws, based on model
 %specification
-%test = 1;
-%if test == 1
+test = 1;
+if test == 1
+%if modelParameters.medianValuesYN == 1
 
-if modelParameters.medianValuesYN == 1
 
-
-    rawData = readtable('sim_pred_sum_incomeGender.csv');
+    rawData = readtable('sim_pred_sum_incomeGender_logNormal.csv');
     medianValues = rawData(:,{'sector', 'gender', 'admin2', 'pred_med'}); %For median values
     lowerBound = rawData(:,{'sector', 'gender', 'admin2', 'pred_25pct'}); 
     upperBound = rawData(:,{'sector', 'gender', 'admin2', 'pred_75pct'}); 

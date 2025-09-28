@@ -6,7 +6,7 @@ close all;
 tic;
 outputs = [];
 
-%Uncomment if running directly from midasMainLoop instead of
+%Comment if running directly from midasMainLoop instead of
 %runMIDASExperiment
 %cd /home/cloud-user/MIDAS-Senegal
 
@@ -231,6 +231,8 @@ for indexT = 1:modelParameters.timeSteps
             currentAgent.agentPortfolioHistory{indexT} = currentAgent.currentPortfolio;
             currentAgent.agentAspirationHistory{indexT} = currentAgent.currentAspiration;
             currentAgent.consideredHistory{indexT} = currentAgent.consideredPortfolios;
+
+            %NOTE _ WHY PORTFOLIO VALUES OFTEN -INF or 0?
             if(~isempty(moved))
                 migrations(indexT) = migrations(indexT) + 1;
                 inMigrations(moved(2), indexT) = inMigrations(moved(2), indexT) + 1;
@@ -300,6 +302,9 @@ for indexT = 1:modelParameters.timeSteps
             feasibleTransfers = remittanceCost ./ potentialAmounts < currentAgent.shareCostThreshold;
             actualAmounts = (potentialAmounts - remittanceCost) .* feasibleTransfers;
             actualPayments = potentialAmounts .* feasibleTransfers;
+            
+            %ADD TRACKER FOR ACTUALPAYMENTS HERE (AS WAY TO TRACK HOW
+            %PAYMENTS VARY BY SCENARIO/INVESTMENT)
             
             %share across network and keep the rest
             for indexN = 1:size(currentAgent.network,2)

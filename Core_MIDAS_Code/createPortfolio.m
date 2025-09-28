@@ -72,6 +72,7 @@ if isempty(portfolio)
 
         if ~any(portfolio)
             disp('Empty portfolio')
+            disp(['Selectable Layers are:' tempSelectable])
         end
     
     %Now, if aspirations flag is turned on, check if portfolio has any non-selectable, aspirational elements 
@@ -183,9 +184,12 @@ if isempty(portfolio)
             portfolioSets = [portfolio highfidelityDuration 1];
         
             %Now find a random aspiration (if any) that is enabled by selectable
-            %portfolio
+            %portfolio - JUNE 10 (OR agentTraining?)
             potentialAspirations = false(1, size(constraints,1));
-            selectedLayers = find(portfolio);
+            
+            %%JUNE 10 NOTE: CHANGE FROM find(portfolio) TO
+            %%find(agentTraining)?
+            selectedLayers = find(agentTraining);
             numLayers = length(selectedLayers);
         
             for indexI = 1:1:numLayers

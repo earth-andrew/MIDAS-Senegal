@@ -6,7 +6,7 @@ clear all;
 close all;
 
 %Load null output file
-prefix = 'SenegalEnsemble_GroundnutBasinDrought_01.14';
+prefix = 'SenegalEnsemble_SaltwaterSensitivitySeverity1.0_07.06.2025';
 fileList = dir([prefix '*.mat']);
 outputList = [];
 
@@ -23,6 +23,7 @@ for indexI = 1:height(fileList)
     agentIncomes = zeros(numAgents,numSteps);
     avgIncomes = zeros(numSteps,1);
     educationHistory = cell(numAgents,1);
+    vocationalHistory = cell(numAgents,1);
     finalYearIncome = zeros(numAgents,1);
     migrationHistory = cell(numAgents,1);
     portfolioHistory = cell(numAgents,1);
@@ -52,6 +53,7 @@ for indexI = 1:height(fileList)
         end
         
         educationHistory{indexA} = currentRun.output.agentSummary.diploma{indexA,1};
+        vocationalHistory{indexA} = currentRun.output.agentSummary.vocational{indexA,1};
         migrationHistory{indexA} = currentRun.output.agentSummary.moveHistory{indexA,1};
         portfolioHistory{indexA} = currentRun.output.agentSummary.portfolioHistory{indexA,1};
         experience{indexA} = currentRun.output.agentSummary.experience{indexA};
@@ -93,16 +95,17 @@ for indexI = 1:height(fileList)
     field11 = 'poorestIncome'; value11 = avgIncomePoorest;
     field12 = 'richestIncome'; value12 = avgIncomeRichest;
     field13 = 'experience'; value13 = {experience};
+    field14 = 'vocational'; value14={vocationalHistory};
     
 
     %Put them into one struct for this run
-    currentOutputValues = struct(field1, value1, field2, value2, field3, value3, field4, value4, field5, value5, field6, value6, field7, value7, field8, value8);
+    currentOutputValues = struct(field1, value1, field2, value2, field3, value3, field4, value4, field5, value5, field6, value6, field7, value7, field8, value8, field14, value14);
     
     %Add current run struct to running list
     outputList = [outputList; currentOutputValues];
 
 end
 
-save('GroundnutBasinDrought_01.14.2025.mat', 'outputList')
+save('SaltwaterSensitivitySeverity1.0_07.06.2025.mat', 'outputList')
 
 end

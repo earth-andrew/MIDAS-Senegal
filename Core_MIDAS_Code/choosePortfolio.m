@@ -80,7 +80,7 @@ locationList = locationList(iSort([true; diff(bSort)>0]),:);
 
 %make note of the total number of portfolios we expect to evaluate in each
 %location
-totalNumPortfolios = agent.numBestPortfolio + agent.numRandomPortfolio;
+totalNumPortfolios = agent.numBestPortfolio + agent.numRandomPortfolio + 1; %Add 1 for currentPortfolio
 
 %since we will try to match historical data to the appropriate season,
 %create labels for what part of the cycle our historical data and our
@@ -159,9 +159,9 @@ for indexL = 1:length(locationList)
         
     end
     
-
+    %Figure out TOTAL PORTFOLIO NUMBER
     %last, come up with a few random portfolios to finish
-    for indexP = (currentPortfolio):totalNumPortfolios
+    for indexP = (currentPortfolio):(totalNumPortfolios)
         [nextRandom, backCastCount] = createPortfolio([], find(any(agent.knowsIncomeLocation(locationList(indexL),:),1)),utilityVariables.utilityTimeConstraints, utilityVariables.utilityPrereqs, agent.pAddFitElement, agent.training, agent.experience, agent.layerFlag, utilityVariables.utilityAccessCosts, utilityVariables.utilityRestrictions, utilityVariables.utilityDuration, agent.numPeriodsEvaluate, selectable, utilityVariables.utilityHistory(indexL,:,currentT-4:currentT-1), agent.wealth, backCastCount, utilityVariables.utilityAccessCodesMat, modelParameters);
         totalPortfoliosCreated = totalPortfoliosCreated + 1;
         if(~isempty(nextRandom))
@@ -206,6 +206,7 @@ for indexL = 1:length(locationList)
     fullHistory = utilityVariables.utilityHistory(locationList(indexL),:,1:currentT);
     availableHistory = agent.incomeLayersHistory(locationList(indexL),:,1:currentT);
     fullHistory(~availableHistory) = NaN;
+    fullHistory(:,:,1:max(0, (currentT - agent.numPeriodsMemory))) = NaN;
 
     %make a blank array to hold the estimated time paths for each layer,
     %and reshape our fullHistory array to be the same 2D shape
@@ -429,6 +430,8 @@ for indexL = 1:length(locationList)
         %prospect theory hack - check!!!!
         vSign = sign(currentPortfolioValue');
         vSign(vSign < 0) = agent.prospectLoss;
+        
+        %FIX DISCOUNT RATE - SHOULD BE MULTIPLIED BY STEPS/YEARS
         portfolioValues(indexP) = (1/riskCoeff) * (vSign .* (abs(currentPortfolioValue') .^ riskCoeff)) * discountFactor;
     end
     

@@ -3,17 +3,20 @@ function plotWealthBackcast()
 
 clear all
 
-load ReferenceCase_01.14.2025.mat
+load ReferenceCase_07.06.2025.mat
 multiObjectiveOutput = outputList;
 
-load SenegalRiverDrought_01.14.2025.mat
+load NoAspirations_07.06.2025.mat
+nullOutput = outputList;
+
+load SenegalRiverDrought_07.06.2025.mat
 droughtOutput = outputList;
 
-load SaltwaterIntrusion_01.14.2025.mat
+load SaltwaterIntrusion_07.06.2025.mat
 saltwaterOutput = outputList;
 
-load GroundnutBasinDrought_01.14.2025.mat
-groundnutOutput = outputList;
+%load GroundnutBasinDrought_02.08.2025.mat
+%groundnutOutput = outputList;
 
 %load SaltwaterIntrusion_EdExpansion_MultiObjectiveCalibration_12.05.2024.mat
 %saltwaterExpansionOutput = outputList;
@@ -21,7 +24,7 @@ groundnutOutput = outputList;
 droughtStart = 30/4;
 droughtEnd = 50/4;
 
-scenarios = [multiObjectiveOutput, droughtOutput, saltwaterOutput, groundnutOutput];
+scenarios = [multiObjectiveOutput, nullOutput, droughtOutput, saltwaterOutput];
 %scenarios = nullOutput;
 numScenarios = size(scenarios,2);
 
@@ -38,6 +41,11 @@ avgIncome = zeros(steps,1);
 stdIncome = zeros(steps,1);
 avgRichest = zeros(steps,1);
 avgPoorest = zeros(steps,1);
+midMeanIncome = zeros(numScenarios,1); %Store mean income for each scenario from specified timesteps
+
+%Time window over which to calculate median income
+midMeanStart = 40;
+midMeanEnd = 60; 
 
 avgBackcast = zeros(steps,1);
 numAgents = 2000;
@@ -58,6 +66,9 @@ for indexT = 1:steps
     %avgPoorest(indexT) = nanmean(poorestIncome(:,indexT));
     avgBackcast(indexT) = nanmean(backCast(:,indexT));
 end
+start_income = avgIncome(11)
+midMeanIncome(1) = nanmean(communityIncome(:,midMeanStart:midMeanEnd),'all')
+end_income = avgIncome(end)
 y_low = avgIncome - stdIncome;
 y_high = avgIncome + stdIncome;
 
@@ -70,9 +81,9 @@ fill(X, Y, colors{1}, 'FaceAlpha', 0.4)
 %plot(time, avgPoorest', 'LineStyle', '--','LineWidth',2, 'Color',colors(1))
 %plot(time ./ 4, avgIncome,'Color', colors{1})
 hold on
-%yyaxis right
-%plot(time ./4, avgBackcast, 'LineStyle', '-', 'Color', colors{1})
-%ylabel('Proportion Backcasting')
+yyaxis right
+plot(time ./4, avgBackcast, 'LineStyle', '-', 'Color', colors{1})
+ylabel('Proportion Backcasting')
 
 for indexS = 2:numScenarios
     runs = size(scenarios,1);
@@ -104,21 +115,23 @@ for indexS = 2:numScenarios
         %avgPoorest(indexT) = nanmean(poorestIncome(:,indexT));
         avgBackcast(indexT) = mean(backcast(:,indexT));
     end
-    
+    start_income = avgIncome(11)
+    midMeanIncome(indexS) = nanmean(communityIncome(:,midMeanStart:midMeanEnd),'all')
+    mean_income = avgIncome(end)
     y_low = avgIncome - stdIncome;
     y_high = avgIncome + stdIncome;
 
 
     X = [time, fliplr(time)] ./4;
     Y = [y_high', fliplr(y_low')];
-    %yyaxis left
+    yyaxis left
     fill(X, Y, colors{indexS}, 'FaceAlpha', 0.4)
     %plot(time ./ 4, avgIncome, 'Color', colors{indexS})
    % plot(time,avgRichest,'LineStyle', ':', 'LineWidth',2,'Color',colors(indexS))
     %plot(time, avgPoorest,'LineStyle', '--', 'LineWidth',2,'Color',colors(indexS))
 
-    %yyaxis right
-    %plot(time ./ 4, avgBackcast, 'LineStyle', '-','Color', colors{indexS})
+    yyaxis right
+    plot(time ./ 4, avgBackcast, 'LineStyle', '-','Color', colors{indexS})
 
 end
 
@@ -127,14 +140,14 @@ hold off
 ax = gca;
 ax.FontSize=20;
 xlabel('Years','FontSize',20);
-%xline([droughtStart droughtEnd], '--',{'Start of Drought', 'End of Drought'},'LineWidth', 2, 'Color', '#A2142F','LabelVerticalAlignment', 'bottom', 'FontSize', 20);
-%yyaxis left
+xline([droughtStart droughtEnd], '--',{'Start of Drought', 'End of Drought'},'LineWidth', 2, 'Color', '#A2142F','LabelVerticalAlignment', 'bottom', 'FontSize', 20);
+yyaxis left
 ylabel('Average Annual Income (CFA)','FontSize',20);
 xlim([11/4,steps/4])
-%yyaxis right
-%ylabel('Average Proportion Backcasting', 'FontSize',20);
-legend({'MultiObjective', 'Drought', 'Saltwater', 'Groundnut'}, 'FontSize',22,'Location','northwest')
-%saveas(gcf, 'CalibrationMeanIncome.png')
+yyaxis right
+ylabel('Proportion of Agents with Aspirations', 'FontSize',20);
+legend({'Reference Case', 'No Aspirations', 'SenegalRiver', 'Saltwater'}, 'FontSize',22,'Location','northwest')
+%saveas(gcf, 'WealthPlot_02.08.2025.png')
 
 %% Print out average job distribution
 

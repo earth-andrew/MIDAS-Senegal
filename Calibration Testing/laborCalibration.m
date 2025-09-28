@@ -5,6 +5,7 @@ close all;
 %Specify Population Weights
 load migData_census2013.mat;
 popWeights = popData';
+popWeightsMatrix = repmat(popWeights,1,6); %Convert to 8 x 6 matrix
 popSum = sum(sum(popWeights));
 
 quantileMarker = 0.1;
@@ -59,7 +60,7 @@ admin1Units = size(regionNames,2);
 
 
 %Loading Model Runs
-fileList = dir('SenegalEnsemble_Calibration_01.07.2025Experiment_*.mat');
+fileList = dir('SenegalEnsemble_Calibration_02.08.2025Experiment_*.mat');
     
 inputListRun = [];
 outputListRun = [];
@@ -150,13 +151,13 @@ for indexI = 1:length(fileList)
 
     adjustedPopWeights = repmat(popWeights, size(simulatedProportion,2),1);
     popWeightJobsError_r2 = weightedPearson(simulatedProportion(:), regionData(:), adjustedPopWeights);
-
+    popWeightJobsRMSE = sqrt(sum(sum(popWeightsMatrix .* (simulatedProportion - regionData).^2) / sum(popWeightsMatrix)));
 
     %runLevel
     currentInputRun = array2table([currentRun.input.parameterValues]','VariableNames',currentRun.input.parameterNames');
 
-    currentOutputRun = table(jobsError,popWeightJobsError, jobsError_r2, popWeightJobsError_r2, ...
-                'VariableNames',{'jobsError', 'popWeightJobsError', 'jobsError_r2', 'popWeightJobsError_r2'});
+    currentOutputRun = table(jobsError,popWeightJobsError, jobsError_r2, popWeightJobsError_r2, popWeightJobsRMSE,...
+                'VariableNames',{'jobsError', 'popWeightJobsError', 'jobsError_r2', 'popWeightJobsError_r2', 'popWeightJobsRMSE'});
                 inputListRun = [inputListRun; currentInputRun];
                 outputListRun = [outputListRun; currentOutputRun];
            
@@ -169,17 +170,17 @@ end
 save evaluationOutputs inputListRun outputListRun fileList
 
 %Select top performing simulations based on popWeightJobsError
-minR2 = quantile(outputListRun.popWeightJobsError_r2,[1 - quantileMarker]);
-bestInputs = inputListRun(outputListRun.popWeightJobsError_r2 >= minR2,:);
+%minR2 = quantile(outputListRun.popWeightJobsRMSE,[1 - quantileMarker]);
+%bestInputs = inputListRun(outputListRun.popWeightJobsRMSE >= minR2,:);
 
 %Sort runs by R2 metric and saves sorted inputs and outputs
-[sortedOutput, sortedIndex] = sortrows(outputListRun, 'popWeightJobsError_r2', 'descend');
-r2_metric = sortedOutput(:,'popWeightJobsError_r2');
+[sortedOutput, sortedIndex] = sortrows(outputListRun, 'popWeightJobsRMSE', 'ascend');
+r2_metric = sortedOutput(:,'popWeightJobsRMSE');
 sortedInput = inputListRun(sortedIndex, :);
 jobsCalibrationTable = [table(sortedIndex, 'VariableNames', {'sortedIndex'}), r2_metric, sortedInput];
-save jobsCalibration_01.07.2025.mat jobsCalibrationTable;
+save jobsCalibration_07.10.2025.mat jobsCalibrationTable;
 
-expList = dir('experiment_SenegalEnsemble_CalibrationTest_01.13.2025_input_summary_*.mat');
+expList = dir('experiment_SenegalEnsemble_CalibrationTest_02.08.2025_input_summary_*.mat');
 load(expList(1).name);
 
 
@@ -190,7 +191,7 @@ for indexI = 1:height(mcParams)
     mcParams.Upper(indexI) = max(table2array(bestInputs(:,tempIndex)));
 end
 
-save updatedMCParams_Jobs01.07.2025 mcParams;
+save updatedMCParams_Jobs02.08.2025 mcParams;
 end
 
 function rho_2 = weightedPearson(X, Y, w)
@@ -204,5 +205,14 @@ covYY = sum (w .* (Y - mY) .* (Y - mY)) / sum(w);
 
 rho_w  = covXY / sqrt(covXX * covYY');
 rho_2 = rho_w * rho_w';
+
+end
+
+function err = rmse(P, O, w, n)
+
+mP = sum(P .* w) / sum(w)
+mO = sum(O .* w) / sum(w)
+
+err = sqrt(sum((mP - mO)^2) / n)
 
 end

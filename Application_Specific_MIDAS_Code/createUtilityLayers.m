@@ -106,10 +106,10 @@ localOnly = [1; ... %ag-aqua rural
     0; %education
 ];
 
-timeQs =[0 .5 .5 0; ... %ag-aqua rural - top layer requires 2-year vocatinoal
-     0 .5 .5 0; %ag-aqua urban
-    .5 0 0 0; ... %livestock rural - top layer requires 2-year vocational
-    .5 0 0 0; %livestock urban
+timeQs =[0 0 .5 .5; ... %ag-aqua rural - top layer requires 2-year vocatinoal
+     0 0 .5 .5; %ag-aqua urban
+    .5 0.5 0 0; ... %livestock rural - top layer requires 2-year vocational
+    .5 0.5 0 0; %livestock urban
     0.75 0.75 0.75 0.75; ... %professional rural - requires 4-year post-secondary
     0.75 0.75 0.75 0.75; %professional urban
     .5 .5 .5 .5; ... %services rural - middle requires 2-year vocational
@@ -463,10 +463,16 @@ for indexI = 1:size(utilityBaseLayers,3)
     if modelParameters.climateFlag == 1
     %For timespans within climate event period, adjust income for given
     %locations
-        CreateUtilityClimateFlagTest = 2
         if ge(indexI, modelParameters.climateStart) && le(indexI, modelParameters.climateStop)
             utilityBaseLayers(climateLocations, modelParameters.agLayers,indexI) = utilityBaseLayers(climateLocations,modelParameters.agLayers,indexI) .* (1 - modelParameters.agClimateEffect .* (indexI - modelParameters.climateStart) / (modelParameters.climateStop - modelParameters.climateStart));
             utilityBaseLayers(climateLocations, modelParameters.nonAgLayers,indexI) = utilityBaseLayers(climateLocations,modelParameters.nonAgLayers,indexI) .* (1 - modelParameters.nonAgClimateEffect .* (indexI - modelParameters.climateStart) / (modelParameters.climateStop - modelParameters.climateStart));     
+        end
+
+        %If saltwater scenario and indexI > climateStop,
+        %set to full climate effect
+        if (modelParameters.climateScenarioIndex == 2) && ge(indexI,modelParameters.climateStop)
+            utilityBaseLayers(climateLocations, modelParameters.agLayers,indexI) = utilityBaseLayers(climateLocations,modelParameters.agLayers,indexI) .* (1 - modelParameters.agClimateEffect);
+            utilityBaseLayers(climateLocations, modelParameters.nonAgLayers,indexI) = utilityBaseLayers(climateLocations,modelParameters.nonAgLayers,indexI) .* (1 - modelParameters.nonAgClimateEffect);     
         end
              
     end

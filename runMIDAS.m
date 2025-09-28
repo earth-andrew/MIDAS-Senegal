@@ -5,16 +5,16 @@ clear classes
 
 
 %Uncomment Paths if running directly from laptop
-%addpath('./Core_MIDAS_Code');
-%addpath('./Application_Specific_MIDAS_Code');
-%addpath('./Data');
-%addpath('./Outputs');
+addpath('./Core_MIDAS_Code');
+addpath('./Application_Specific_MIDAS_Code');
+addpath('./Data');
+addpath('./Outputs');
 
 rng('shuffle');
 
 runName = 'FarmSeasonality';
-series = ['SenegalBaseCase_MedianRun'];
-saveDirectory = 'MIDAS-Senegal/Outputs/';
+series = ['SenegalBaseCase_createPortfolioTest_06.10'];
+%saveDirectory = 'MIDAS-Senegal/Outputs/';
 
 %Uncomment saveDirectory below if saving on local computer
 %saveDirectory = 'Outputs/';

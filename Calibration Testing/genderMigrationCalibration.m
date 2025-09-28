@@ -25,12 +25,12 @@ femaleSum = groupedMigration.sum_migr13_5y(strcmp(groupedMigration.gender, 'fema
 femaleProp = femaleSum / sum(groupedMigration.sum_migr13_5y);
 %Read in simulated data and extract education rates
 higherEdLayers = [37 38]; %Income Layers representing higher education (male, female)
-
+    
 try
     load evaluationOutputs2
     disp (evaluationOutputs)
 catch
-    fileList = dir('SenegalEnsemble_Calibration_01.07.2025Experiment_*.mat');
+    fileList = dir('SenegalEnsemble_Calibration_06.26.2025Experiment_*.mat');
     
     inputListRun = [];
     outputListRun = [];
@@ -75,15 +75,16 @@ catch
             
             modelFemaleProp = femaleMigration / (maleMigration + femaleMigration);
                      
-            GenderError = ((modelFemaleProp - femaleProp) / femaleProp).^2;
+            GenderError = sqrt((modelFemaleProp - femaleProp).^2 / numel(femaleProp));
+            GenderRMSE = rmse(modelFemaleProp, femaleProp, numel(femaleProp));
             
             %runLevel
             currentInputRun = array2table([currentRun.input.parameterValues]','VariableNames',currentRun.input.parameterNames');
 
             %currentInputRun = array2table([currentRun.input.parameterValues]','VariableNames',strrep({currentRun.input.parameterNames},'.',''))
 
-            currentOutputRun = table(GenderError, ...
-                'VariableNames',{'GenderError'});
+            currentOutputRun = table(GenderRMSE, ...
+                'VariableNames',{'GenderRMSE'});
             inputListRun = [inputListRun; currentInputRun];
             outputListRun = [outputListRun; currentOutputRun];
             %inputListRun(indexI,:) = currentInputRun
@@ -105,18 +106,18 @@ end
 
 save evaluationOutputs inputListRun outputListRun fileList
 
-minR2 = quantile(outputListRun.GenderError,[1 - quantileMarker]);
-bestInputs = inputListRun(outputListRun.GenderError >= minR2,:);
+minR2 = quantile(outputListRun.GenderRMSE,[1 - quantileMarker]);
+bestInputs = inputListRun(outputListRun.GenderRMSE >= minR2,:);
 
 
 %Sort runs by R2 metric and saves sorted inputs and outputs
-[sortedOutput, sortedIndex] = sortrows(outputListRun, 'GenderError', 'ascend');
-r2_metric = sortedOutput(:,'GenderError');
+[sortedOutput, sortedIndex] = sortrows(outputListRun, 'GenderRMSE', 'ascend');
+r2_metric = sortedOutput(:,'GenderRMSE');
 sortedInput = inputListRun(sortedIndex, :);
 genderCalibrationTable = [table(sortedIndex, 'VariableNames', {'sortedIndex'}), r2_metric, sortedInput];
-save genderCalibration_01.07.2025.mat genderCalibrationTable;
+save genderCalibration_07.04.2025.mat genderCalibrationTable;
 
-expList = dir('experiment_SenegalEnsemble_CalibrationTest_01.13.2025_input_summary_*.mat');
+expList = dir('experiment_SenegalEnsemble_CalibrationTest_02.08.2025_input_summary_*.mat');
 load(expList(1).name);
 
 
@@ -127,7 +128,7 @@ for indexI = 1:height(mcParams)
     mcParams.Upper(indexI) = max(table2array(bestInputs(:,tempIndex)));
 end
 
-save updatedMCParams mcParams;
+%save updatedMCParams mcParams;
 
 
 end
@@ -146,22 +147,9 @@ rho_2 = rho_w * rho_w;
 
 end
 
-function plotMigrations(matrix, r2, metricTitle)
+function err = rmse(P, O, n)
 
-load midasLocations;
+err = sqrt(sum((P - O).^2) / n);
 
-figure;
-imagesc(matrix);
-set(gca,'YTick',1:64, 'XTick',1:64, 'YTickLabel',midasLocations.source_ADMIN_NAME, 'XTickLabel',midasLocations.source_ADMIN_NAME);
-xtickangle(90);
-colorbar;
-title([metricTitle ' - Interdistrict moves (n = ' num2str(sum(sum(matrix))) '; Weighted r^2 = ' num2str(r2) ')']);
-grid on;
-colormap hot;
-set(gca,'GridColor','white','FontSize',12);
-temp = ylabel('ORIGIN','FontSize',16,'Position',[-5 30]);
-xlabel('DESTINATION','FontSize',16);
-%set(temp,'Position', [-.1 .5 0]);
-set(gcf,'Position',[100 100 600 500]);
-savefig('MigrationCalibration.png')
 end
+
